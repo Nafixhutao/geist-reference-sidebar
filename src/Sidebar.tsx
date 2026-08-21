@@ -2,7 +2,6 @@ import { useState, type CSSProperties } from "react";
 import {
   BookOpen,
   ChevronDown,
-  ChevronUp,
   ChevronsUpDown,
   FileText,
   Headphones,
@@ -48,6 +47,25 @@ function Badge({ kind }: { kind: BadgeKind }) {
   );
 }
 
+function ChevronToggle({ className = "", gap = 0.6 }: { className?: string; gap?: number }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className={className} aria-hidden="true">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        transform={`translate(0 ${-gap})`}
+        d="M10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        transform={`translate(0 ${gap})`}
+        d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06Z"
+      />
+    </svg>
+  );
+}
+
 function BrandIcon({ brand }: { brand: "slack" | "discord" }) {
   if (brand === "slack") {
     return (
@@ -61,13 +79,14 @@ function BrandIcon({ brand }: { brand: "slack" | "discord" }) {
   }
 
   return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-[14px] w-[14px] shrink-0 fill-current text-[#AAA6AE] lg:h-[15px] lg:w-[15px]"
-    >
-      <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" />
-    </svg>
+    <span className="flex size-4 shrink-0 items-center justify-center text-[#AAA6AE] [&>svg]:size-4">
+      <svg viewBox="-32 -60.5 320 320" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid">
+        <path
+          fillRule="nonzero"
+          d="M216.856339,16.5966031 C200.285002,8.84328665 182.566144,3.2084988 164.041564,0 C161.766523,4.11318106 159.108624,9.64549908 157.276099,14.0464379 C137.583995,11.0849896 118.072967,11.0849896 98.7430163,14.0464379 C96.9108417,9.64549908 94.1925838,4.11318106 91.8971895,0 C73.3526068,3.2084988 55.6133949,8.86399117 39.0420583,16.6376612 C5.61752293,67.146514 -3.4433191,116.400813 1.08711069,164.955721 C23.2560196,181.510915 44.7403634,191.567697 65.8621325,198.148576 C71.0772151,190.971126 75.7283628,183.341335 79.7352139,175.300261 C72.104019,172.400575 64.7949724,168.822202 57.8887866,164.667963 C59.7209612,163.310589 61.5131304,161.891452 63.2445898,160.431257 C105.36741,180.133187 151.134928,180.133187 192.754523,160.431257 C194.506336,161.891452 196.298154,163.310589 198.110326,164.667963 C191.183787,168.842556 183.854737,172.420929 176.223542,175.320965 C180.230393,183.341335 184.861538,190.991831 190.096624,198.16893 C211.238746,191.588051 232.743023,181.531619 254.911949,164.955721 C260.227747,108.668201 245.831087,59.8662432 216.856339,16.5966031 Z M85.4738752,135.09489 C72.8290281,135.09489 62.4592217,123.290155 62.4592217,108.914901 C62.4592217,94.5396472 72.607595,82.7145587 85.4738752,82.7145587 C98.3405064,82.7145587 108.709962,94.5189427 108.488529,108.914901 C108.508531,123.290155 98.3405064,135.09489 85.4738752,135.09489 Z M170.525237,135.09489 C157.88039,135.09489 147.510584,123.290155 147.510584,108.914901 C147.510584,94.5396472 157.658606,82.7145587 170.525237,82.7145587 C183.391518,82.7145587 193.761324,94.5189427 193.539891,108.914901 C193.539891,123.290155 183.391518,135.09489 170.525237,135.09489 Z"
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -77,7 +96,7 @@ function NavRow({ icon: Icon, label, badge, expandable = false, labelClassName =
       <Icon size={15} strokeWidth={1.8} className="shrink-0 text-[#AAA6AE]" />
       <span className={`flex-1 origin-left truncate ${labelClassName}`} style={labelStyle}>{label}</span>
       {badge && <Badge kind={badge} />}
-      {expandable && <ChevronDown size={13} strokeWidth={1.8} className="ml-auto shrink-0 text-[#737078]" />}
+      {expandable && <ChevronToggle className="ml-auto size-[13px] shrink-0 text-[#737078]" />}
     </button>
   );
 }
@@ -88,7 +107,7 @@ function BrandNavRow({ brand, label, badge }: { brand: "slack" | "discord"; labe
       <BrandIcon brand={brand} />
       <span className="flex-1 origin-left truncate">{label}</span>
       {badge && <Badge kind={badge} />}
-      <ChevronDown size={13} strokeWidth={1.8} className="ml-auto shrink-0 text-[#737078]" />
+      <ChevronToggle className="ml-auto size-[13px] shrink-0 text-[#737078]" />
     </button>
   );
 }
@@ -99,7 +118,10 @@ function Header({ onClose }: Pick<SidebarProps, "onClose">) {
       <img alt="Nafixhutao avatar" className="shrink-0 object-cover size-5 rounded-md" src="https://avatars.githubusercontent.com/u/135522402?s=80&v=4" />
       <span className="ml-2 text-[14px] font-medium tracking-[-0.01em] leading-[20px] text-[oklch(0.949_0.0035_305)]" style={{ fontFamily: '"Geist Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"', fontStyle: "normal", fontWeight: 500 }}>Nafixhutao</span>
       <span className="ml-2 rounded-[5px] bg-[#201E22] px-[6px] py-[2px] text-[12px] font-medium leading-[16px] text-[oklch(0.767_0.0105_305)]" style={{ fontFamily: '"Geist Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"', fontStyle: "normal", fontWeight: 500 }}>Pro Plus</span>
-      <ChevronsUpDown size={12} strokeWidth={1.7} className="ml-2 shrink-0 text-[#737078]" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="ml-2 size-[13px] shrink-0 text-[#737078]" aria-hidden="true">
+        <path d="m7 8 5-5 5 5" />
+        <path d="m7 16 5 5 5-5" />
+      </svg>
       <button
         type="button"
         onClick={onClose}
@@ -118,8 +140,7 @@ function Header({ onClose }: Pick<SidebarProps, "onClose">) {
   );
 }
 
-function ReviewSection() {
-  const [reviewOpen, setReviewOpen] = useState(true);
+function ReviewSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const submenu = ["Triage", "Repositories", "Integrations", "Learnings", "Caches", "Organization Settings"];
 
   return (
@@ -127,18 +148,14 @@ function ReviewSection() {
       <button
         type="button"
         className={rowClass}
-        onClick={() => setReviewOpen((value) => !value)}
-        aria-expanded={reviewOpen}
+        onClick={onToggle}
+        aria-expanded={open}
       >
         <FileText size={15} strokeWidth={1.8} className="shrink-0 text-[#AAA6AE]" />
         <span>Review</span>
-        {reviewOpen ? (
-          <ChevronUp size={13} strokeWidth={1.8} className="ml-auto shrink-0 text-[#737078]" />
-        ) : (
-          <ChevronDown size={13} strokeWidth={1.8} className="ml-auto shrink-0 text-[#737078]" />
-        )}
+        <ChevronToggle className="ml-auto size-[13px] shrink-0 text-[#737078]" />
       </button>
-      {reviewOpen && (
+      {open && (
         <div className="ml-[22px] border-l border-[#3A373F] py-[1px] pl-[20px]">
           {submenu.map((item) => (
             <button
@@ -171,6 +188,7 @@ function BottomProfile() {
 
 /** A reference-accurate, responsive navigation drawer. */
 export function Sidebar({ open, onClose }: SidebarProps) {
+  const [reviewOpen, setReviewOpen] = useState(true);
   return (
     <>
       <button
@@ -196,17 +214,28 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           />
           <NavRow icon={House} label="Explore" />
           <NavRow icon={PieChart} label="Analytics" expandable />
-          <div className="mx-2 my-1 h-px bg-[#322F37]" />
-          <ReviewSection />
+          <ReviewSection open={reviewOpen} onToggle={() => setReviewOpen((value) => !value)} />
           <BrandNavRow brand="slack" label="Slack" badge="New" />
           <BrandNavRow brand="discord" label="Discord" />
           <NavRow icon={ShieldCheck} label="Security" badge="New" expandable />
           <NavRow icon={ReceiptText} label="Plan" expandable />
-          <div className="mx-2 my-1 h-px bg-[#322F37]" />
           <NavRow icon={Users} label="Account" expandable />
           <NavRow icon={BookOpen} label="Documentation" />
           <NavRow icon={Headphones} label="Contact Support" />
         </nav>
+        {reviewOpen && (
+          <div className="relative flex shrink-0 items-center justify-center px-2 py-3">
+            <div className="absolute inset-x-2 h-px bg-[#322F37]" />
+            <button
+              type="button"
+              className="relative z-10 inline-flex h-[26px] w-[97px] m-0 items-center justify-center gap-1.5 rounded-full border border-[#322F37] bg-[oklab(0.752933_0.074291_0.151997_/_0.149438)] px-[10px] py-[4px] text-[12px] font-medium leading-[16px] text-[oklab(0.934913_0.00231829_-0.00331086)] hover:bg-white/[0.04]"
+              style={{ fontFamily: '"Geist Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"', fontStyle: "normal", fontWeight: 500 }}
+            >
+              <ChevronDown size={12} strokeWidth={2} className="shrink-0" />
+              View more
+            </button>
+          </div>
+        )}
         <BottomProfile />
       </aside>
     </>
