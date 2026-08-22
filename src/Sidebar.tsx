@@ -141,9 +141,14 @@ function ReviewSection({ open, onToggle }: { open: boolean; onToggle: () => void
     const el = submenuRef.current;
     if (!el) return;
     const mm = gsap.matchMedia();
-    mm.add({ reduce: "(prefers-reduced-motion: reduce)" }, (ctx) => {
-      const reduce = !!ctx.conditions?.reduce;
-      gsap.to(el, {
+    mm.add(
+      {
+        ok: "(prefers-reduced-motion: no-preference)",
+        reduce: "(prefers-reduced-motion: reduce)",
+      },
+      (ctx) => {
+        const reduce = !!ctx.conditions?.reduce;
+        gsap.to(el, {
         height: open ? "auto" : 0,
         autoAlpha: open ? 1 : 0,
         duration: reduce ? 0 : 0.3,
@@ -213,9 +218,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     const aside = asideRef.current;
     if (!aside) return;
     const mm = gsap.matchMedia();
-    mm.add({ reduce: "(prefers-reduced-motion: reduce)" }, (ctx) => {
-      const reduce = !!ctx.conditions?.reduce;
-      gsap.from(aside.querySelectorAll("nav > button"), {
+    mm.add(
+      {
+        ok: "(prefers-reduced-motion: no-preference)",
+        reduce: "(prefers-reduced-motion: reduce)",
+      },
+      (ctx) => {
+        const reduce = !!ctx.conditions?.reduce;
+        gsap.from(aside.querySelectorAll("nav > button"), {
         y: 8,
         autoAlpha: 0,
         duration: reduce ? 0 : 0.35,
