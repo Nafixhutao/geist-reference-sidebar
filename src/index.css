@@ -1,5 +1,4 @@
 @import "tailwindcss" source(none);
-@source "../index.html";
 @source "./";
 
 /* Tailwind v4 preflight dropped `cursor: pointer` on buttons — restore v3 behavior */

@@ -1,3 +1,5 @@
+"use client";
+
 import { PixelSkeleton } from "./PixelSkeleton";
 
 /** Contoh penggunaan PixelSkeleton: dasar, kartu, dan layout. */

@@ -1,17 +1,16 @@
-if (import.meta.env.DEV) {
-  import("react-grab");
-}
+"use client";
 
-import { useState } from "react";
-import { createRoot } from "react-dom/client";
+import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
-import { Sidebar } from "./Sidebar";
-import { SkeletonDemo } from "./SkeletonDemo";
-import "@fontsource-variable/geist";
-import "./index.css";
+import { Sidebar } from "../Sidebar";
+import { SkeletonDemo } from "../SkeletonDemo";
 
-export default function App() {
+export default function Page() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") import("react-grab");
+  }, []);
 
   return (
     <div className="min-h-dvh bg-[#1A181D]">
@@ -31,5 +30,3 @@ export default function App() {
     </div>
   );
 }
-
-createRoot(document.getElementById("root")!).render(<App />);

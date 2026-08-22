@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import gsap from "gsap";
 import { PixelSkeleton } from "./PixelSkeleton";
