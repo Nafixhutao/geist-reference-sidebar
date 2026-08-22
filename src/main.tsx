@@ -6,6 +6,7 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
+import { SkeletonDemo } from "./SkeletonDemo";
 import "@fontsource-variable/geist";
 import "./index.css";
 
@@ -16,6 +17,7 @@ export default function App() {
     <div className="min-h-dvh bg-[#1A181D]">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="min-h-dvh lg:pl-[268px]">
+        <SkeletonDemo />
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
