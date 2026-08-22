@@ -1,6 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source(none);
+@source "../index.html";
+@source "./";
+
+/* Tailwind v4 preflight dropped `cursor: pointer` on buttons — restore v3 behavior */
+button, [role="button"] { cursor: pointer; }
 
 :root {
   --text-color-cui-secondary: #aaa6ae;
@@ -12,7 +15,6 @@
 
 * { box-sizing: border-box; }
 html, body, #root { min-height: 100%; margin: 0; }
-button { font: inherit; }
 
 .sidebar-scrollbar { scrollbar-width: thin; scrollbar-color: #3a373f transparent; }
 .sidebar-scrollbar::-webkit-scrollbar { width: 5px; }

@@ -5,7 +5,7 @@ export function SkeletonDemo() {
   return (
     <div className="min-h-dvh space-y-10 p-6">
       <section className="space-y-3">
-        <h2 className="m-0 text-sm font-medium text-[#EEEAF0]">Dasar</h2>
+        <h2 className="text-sm font-medium text-[#EEEAF0]">Dasar</h2>
         <PixelSkeleton className="h-5 w-24" />
         <PixelSkeleton className="h-10 w-40" />
         <PixelSkeleton className="h-10 w-full rounded-md" />
@@ -13,7 +13,7 @@ export function SkeletonDemo() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="m-0 text-sm font-medium text-[#EEEAF0]">Skeleton card</h2>
+        <h2 className="text-sm font-medium text-[#EEEAF0]">Skeleton card</h2>
         <div className="max-w-sm rounded-xl border border-[#322F37] bg-[#232127] p-4">
           <div className="flex items-center gap-3">
             <PixelSkeleton circular className="h-10 w-10" />
@@ -32,7 +32,7 @@ export function SkeletonDemo() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="m-0 text-sm font-medium text-[#EEEAF0]">Skeleton layout</h2>
+        <h2 className="text-sm font-medium text-[#EEEAF0]">Skeleton layout</h2>
         <div className="flex gap-4">
           <div className="hidden w-40 shrink-0 space-y-2 sm:block">
             <PixelSkeleton className="h-8 w-full" />
