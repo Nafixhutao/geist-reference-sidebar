@@ -1,16 +1,23 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import gsap from "gsap";
+import { PixelSkeleton } from "./PixelSkeleton";
 import {
   BookOpen,
   ChevronDown,
   ChevronsUpDown,
+  ExternalLink,
   FileText,
   Headphones,
   House,
+  LogOut,
+  Monitor,
+  Moon,
   PieChart,
   ReceiptText,
   Search,
   ShieldCheck,
+  Sun,
+  User,
   Users,
   X,
   type LucideIcon,
@@ -106,11 +113,21 @@ function NavRow({ icon, label, badge, expandable = false, labelClassName = "" }:
 }
 
 function Header({ onClose }: Pick<SidebarProps, "onClose">) {
+  const [planLoading, setPlanLoading] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setPlanLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <header className="flex h-[44px] shrink-0 items-center px-4 lg:h-[48px]">
       <img alt="Nafixhutao avatar" className="shrink-0 object-cover size-5 rounded-md" src="https://avatars.githubusercontent.com/u/135522402?s=80&v=4" />
       <span className="ml-2 text-[14px] font-medium tracking-[-0.01em] leading-[20px] text-[oklch(0.949_0.0035_305)]">Nafixhutao</span>
-      <span className="ml-2 rounded-[5px] bg-[#201E22] px-[6px] py-[2px] text-[12px] font-medium leading-[16px] text-[oklch(0.767_0.0105_305)]">Pro Plus</span>
+      {planLoading ? (
+        <PixelSkeleton className="ml-2 h-5 w-14" />
+      ) : (
+        <span className="ml-2 rounded-[5px] bg-[#201E22] px-[6px] py-[2px] text-[12px] font-medium leading-[16px] text-[oklch(0.767_0.0105_305)]">Pro Plus</span>
+      )}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="ml-2 size-[13px] shrink-0 text-[#737078]" aria-hidden="true">
         <path d="m7 8 5-5 5 5" />
         <path d="m7 16 5 5 5-5" />
@@ -194,15 +211,139 @@ function ReviewSection({ open, onToggle }: { open: boolean; onToggle: () => void
   );
 }
 
-function BottomProfile() {
+const menuRowClass =
+  "flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-[13px] text-[#b3b0ba] transition-colors hover:bg-[#26262e] hover:text-[#edecf1] [&>svg]:shrink-0";
+
+function Divider() {
+  return <div aria-hidden="true" className="mx-2 my-1 h-px bg-[#2d2d35]" />;
+}
+
+const themeOptions = [
+  { id: "light", label: "Light", Icon: Sun },
+  { id: "dark", label: "Dark", Icon: Moon },
+  { id: "system", label: "System", Icon: Monitor },
+] as const;
+
+type ThemeId = (typeof themeOptions)[number]["id"];
+
+function ProfileMenu({ onClose }: { onClose: () => void }) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [theme, setTheme] = useState<ThemeId>("dark");
+
+  useEffect(() => {
+    const el = menuRef.current;
+    if (!el) return;
+
+    const mm = gsap.matchMedia();
+    mm.add(
+      {
+        ok: "(prefers-reduced-motion: no-preference)",
+        reduce: "(prefers-reduced-motion: reduce)",
+      },
+      (ctx) => {
+        const reduce = !!ctx.conditions?.reduce;
+        gsap.fromTo(
+          el,
+          { y: 8, scale: 0.98, autoAlpha: 0 },
+          { y: 0, scale: 1, autoAlpha: 1, duration: reduce ? 0 : 0.2, ease: "power2.out", transformOrigin: "bottom left" },
+        );
+      },
+    );
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (!el.contains(e.target as Node)) onClose();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      mm.revert();
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
   return (
-    <footer className="flex shrink-0 items-center px-[14px] py-[10px]">
-      <img alt="NN" className="shrink-0 object-cover size-8 rounded-full" src="https://avatars.githubusercontent.com/u/135522402?v=4" />
-      <div className="ml-2 min-w-0 leading-tight">
-        <p className="m-0 truncate text-[14px] leading-[20px] text-[oklch(0.767_0.0105_305)]">Nafixhutao</p>
-        <p className="m-0 mt-[2px] text-[12px] leading-[16px] text-[oklch(0.585_0.0161_305)]">Admin</p>
+    <div
+      ref={menuRef}
+      role="menu"
+      aria-label="Account menu"
+      // ponytail: anchored inside the overflow-hidden aside; portal it if it ever clips on short viewports
+      className="absolute bottom-[calc(100%+10px)] left-3 right-3 z-50 rounded-[12px] border border-[#2d2d35] bg-[#232127] p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+    >
+      <div aria-hidden="true" className="absolute -bottom-[5px] left-4 size-2.5 rotate-45 border-b border-r border-[#2d2d35] bg-[#232127]" />
+
+      <div className="flex items-center gap-2.5 px-2.5 py-2.5">
+        <img alt="" className="size-9 shrink-0 rounded-full object-cover" src="https://avatars.githubusercontent.com/u/135522402?v=4" />
+        <div className="min-w-0 leading-tight">
+          <p className="m-0 truncate text-[13px] font-semibold text-[#edecf1]">Nafixhutao</p>
+          <p className="m-0 mt-[2px] truncate text-[12px] text-[#8a8791]">@nafixhutao</p>
+        </div>
       </div>
-      <ChevronsUpDown size={12} strokeWidth={1.7} className="ml-auto shrink-0 text-[#737078]" aria-hidden="true" />
+
+      <Divider />
+
+      <div className="flex items-center justify-between px-2.5 py-2">
+        <span className="text-[13px] text-[#b3b0ba]">Theme</span>
+        <div className="flex items-center gap-0.5 rounded-full bg-[#26262e] p-0.5">
+          {themeOptions.map(({ id, label, Icon }) => (
+            <button
+              type="button"
+              key={id}
+              aria-label={label}
+              aria-pressed={theme === id}
+              onClick={() => setTheme(id)}
+              className={`flex size-6 items-center justify-center rounded-full transition-colors ${
+                theme === id ? "bg-[#edecf1] text-[#1a1a1a]" : "text-[#b3b0ba] hover:text-[#edecf1]"
+              }`}
+            >
+              <Icon size={13} strokeWidth={2} aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Divider />
+
+      <button type="button" role="menuitem" className={menuRowClass}>
+        <User size={15} strokeWidth={1.8} aria-hidden="true" />
+        Profile Settings
+      </button>
+      <button type="button" role="menuitem" className={menuRowClass}>
+        <ExternalLink size={15} strokeWidth={1.8} aria-hidden="true" />
+        Refer and Earn
+      </button>
+      <button type="button" role="menuitem" className={`${menuRowClass} text-[#f2708a] hover:text-[#f2708a]`}>
+        <LogOut size={15} strokeWidth={1.8} aria-hidden="true" />
+        Log out
+      </button>
+    </div>
+  );
+}
+
+function BottomProfile() {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+
+  return (
+    <footer className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex w-full items-center px-[14px] py-[10px] text-left"
+      >
+        <img alt="Nafixhutao avatar" className="shrink-0 object-cover size-8 rounded-full" src="https://avatars.githubusercontent.com/u/135522402?v=4" />
+        <div className="ml-2 min-w-0 leading-tight">
+          <p className="m-0 truncate text-[14px] leading-[20px] text-[oklch(0.767_0.0105_305)]">Nafixhutao</p>
+          <p className="m-0 mt-[2px] text-[12px] leading-[16px] text-[oklch(0.585_0.0161_305)]">Admin</p>
+        </div>
+        <ChevronsUpDown size={12} strokeWidth={1.7} className="ml-auto shrink-0 text-[#737078]" aria-hidden="true" />
+      </button>
+      {open && <ProfileMenu onClose={close} />}
     </footer>
   );
 }
