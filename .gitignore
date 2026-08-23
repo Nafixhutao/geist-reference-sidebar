@@ -3,6 +3,7 @@ dist
 dist-ssr
 .next
 next-env.d.ts
+*.tsbuildinfo
 *.local
 .DS_Store
 *.log

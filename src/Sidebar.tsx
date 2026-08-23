@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import gsap from "gsap";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { PixelSkeleton } from "./PixelSkeleton";
 import {
   BookOpen,
@@ -24,6 +24,73 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+
+// Motion tokens taken from the beui animated-sidebar (lib/ease).
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const EASE_DRAWER: [number, number, number, number] = [0.32, 0.72, 0, 1];
+const SPRING_PRESS = { type: "spring", stiffness: 500, damping: 30, mass: 0.6 } as const;
+const SPRING_LAYOUT = { type: "spring", stiffness: 360, damping: 32, mass: 0.6 } as const;
+
+const PANEL_TRANSITION = { duration: 0.36, ease: EASE_DRAWER } as const;
+const REDUCED_TRANSITION = { duration: 0.16, ease: EASE_OUT } as const;
+
+const SUBMENU_TRANSITION = { duration: 0.22, ease: EASE_OUT } as const;
+
+// gsap power2.out — keeps the previous entrance/popover feel
+const POWER2_OUT: [number, number, number, number] = [0.33, 1, 0.68, 1];
+// gsap power2.inOut — symmetric ease for the height expand/collapse
+const POWER2_INOUT: [number, number, number, number] = [0.45, 0, 0.55, 1];
+
+// Open keeps the original morph: clip-path reveal with a staggered blur-up.
+// The close is GSAP-style — the measured height tweens to 0 while fading, so
+// the rows below ride up with the collapsing box instead of waiting out an
+// empty reserved gap. The object-form exit matters: the label-exit path
+// never visibly rendered the container's own values in this setup.
+const SUBMENU_VARIANTS: Variants = {
+  closed: {
+    opacity: 0,
+    clipPath: "inset(0px 0px 100% 0)",
+  },
+  open: {
+    opacity: 1,
+    clipPath: "inset(0px 0px 0% 0)",
+    transition: { duration: 0.2, delayChildren: 0.05, ease: EASE_OUT, staggerChildren: 0.035 },
+  },
+};
+
+const SUBMENU_ITEM_VARIANTS: Variants = {
+  closed: { opacity: 0, y: 4, filter: "blur(3px)" },
+  open: { opacity: 1, y: 0, filter: "blur(0px)", transition: SUBMENU_TRANSITION },
+};
+
+// Original entrance: nav rows stagger in from y:8.
+const NAV_VARIANTS: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.04 } },
+};
+
+const NAV_ITEM_VARIANTS: Variants = {
+  hidden: { y: 8, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { duration: 0.35, ease: POWER2_OUT } },
+};
+
+const tap = (reduce: boolean) => (reduce ? undefined : { scale: 0.98 });
+
+function subscribeMediaQuery(query: string, callback: () => void) {
+  const mql = window.matchMedia(query);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+/** Same shape as the beui useIsMobile: server assumes the desktop branch. */
+function useMediaQuery(query: string) {
+  const subscribe = useCallback((callback: () => void) => subscribeMediaQuery(query, callback), [query]);
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
+}
 
 export interface SidebarProps {
   /** Controls the slide-in mobile drawer. Desktop is always visible. */
@@ -104,18 +171,23 @@ function BrandIcon({ brand }: { brand: "slack" | "discord" }) {
 }
 
 function NavRow({ icon, label, badge, expandable = false, labelClassName = "" }: NavRowProps) {
+  const reduce = useReducedMotion() ?? false;
   return (
-    <button type="button" className={rowClass}>
-      {icon}
-      <span className={`flex-1 origin-left truncate ${labelClassName}`}>{label}</span>
-      {badge && <Badge kind={badge} />}
-      {expandable && <ChevronToggle className="ml-auto size-[13px] shrink-0 text-[#737078]" />}
-    </button>
+    // layout wrapper lets rows below an opening/closing submenu glide
+    <motion.div layout="position" transition={SPRING_LAYOUT} variants={NAV_ITEM_VARIANTS}>
+      <motion.button type="button" className={rowClass} whileTap={tap(reduce)} transition={SPRING_PRESS}>
+        {icon}
+        <span className={`flex-1 origin-left truncate ${labelClassName}`}>{label}</span>
+        {badge && <Badge kind={badge} />}
+        {expandable && <ChevronToggle className="ml-auto size-[13px] shrink-0 text-[#737078]" />}
+      </motion.button>
+    </motion.div>
   );
 }
 
 function Header({ onClose }: Pick<SidebarProps, "onClose">) {
   const [planLoading, setPlanLoading] = useState(true);
+  const reduce = useReducedMotion() ?? false;
   useEffect(() => {
     const timer = setTimeout(() => setPlanLoading(false), 1500);
     return () => clearTimeout(timer);
@@ -134,14 +206,16 @@ function Header({ onClose }: Pick<SidebarProps, "onClose">) {
         <path d="m7 8 5-5 5 5" />
         <path d="m7 16 5 5 5-5" />
       </svg>
-      <button
+      <motion.button
         type="button"
         onClick={onClose}
+        whileTap={tap(reduce)}
+        transition={SPRING_PRESS}
         className="ml-auto inline-flex h-6 w-6 items-center justify-center text-[#AAA6AE] hover:text-[#EEEAF0] lg:hidden"
         aria-label="Close sidebar"
       >
         <X size={14} strokeWidth={1.8} />
-      </button>
+      </motion.button>
       <span className="group/btn ml-auto hidden shrink-0 text-[#AAA6AE] lg:block">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="size-4" aria-hidden="true">
           <rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
@@ -153,63 +227,74 @@ function Header({ onClose }: Pick<SidebarProps, "onClose">) {
 }
 
 function ReviewSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  const reduce = useReducedMotion() ?? false;
   const submenuRef = useRef<HTMLDivElement>(null);
   const submenu = ["Triage", "Repositories", "Integrations", "Learnings", "Caches", "Organization Settings"];
 
-  useEffect(() => {
-    const el = submenuRef.current;
-    if (!el) return;
-    const mm = gsap.matchMedia();
-    mm.add(
-      {
-        ok: "(prefers-reduced-motion: no-preference)",
-        reduce: "(prefers-reduced-motion: reduce)",
-      },
-      (ctx) => {
-        const reduce = !!ctx.conditions?.reduce;
-        gsap.to(el, {
-        height: open ? "auto" : 0,
-        autoAlpha: open ? 1 : 0,
-        duration: reduce ? 0 : 0.3,
-        ease: "power2.inOut",
-        overwrite: "auto",
-      });
-      if (open) {
-        gsap.fromTo(
-          el.querySelectorAll(":scope > button"),
-          { y: 4, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: reduce ? 0 : 0.25, stagger: reduce ? 0 : 0.03, delay: reduce ? 0 : 0.05, ease: "power2.out", overwrite: "auto" },
-        );
-      }
-    });
-    return () => mm.revert();
-  }, [open]);
+  // A resting filter forces a compositing layer and flips the submenu text
+  // from subpixel to grayscale antialiasing. The clip-path stays: the exit
+  // reveal needs an interpolable origin, and inset(0 0 0% 0) does not composite.
+  const clearSubmenuArtifacts = () => {
+    submenuRef.current
+      ?.querySelectorAll("button")
+      .forEach((b) => b.style.removeProperty("filter"));
+  };
 
   return (
-    <section>
-      <button
+    // joins the nav entrance stagger like every other row; layout keeps the
+    // rows below gliding when the submenu opens/closes
+    <motion.section layout="position" transition={SPRING_LAYOUT} variants={NAV_ITEM_VARIANTS}>
+      <motion.button
         type="button"
         className={rowClass}
         onClick={onToggle}
         aria-expanded={open}
+        whileTap={tap(reduce)}
+        transition={SPRING_PRESS}
       >
         <FileText size={15} strokeWidth={1.8} className="shrink-0 text-[#AAA6AE]" />
         <span>Review</span>
         <ChevronToggle className="ml-auto size-[13px] shrink-0 text-[#737078]" />
-      </button>
-      <div ref={submenuRef} className="ml-[22px] overflow-hidden border-l border-[#3A373F] pl-[20px]">
-        {submenu.map((item) => (
-          <button
-            type="button"
-            key={item}
-            className="flex h-[30px] w-full items-center text-left text-[12px] font-normal text-[#C5C1C9] hover:text-[#EEEAF0] lg:h-[34px] lg:text-[14px]"
+      </motion.button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="review-submenu"
+            ref={submenuRef}
+            className="ml-[22px] overflow-hidden border-l border-[#3A373F] pl-[20px]"
+            variants={reduce ? undefined : SUBMENU_VARIANTS}
+            initial={reduce ? false : "closed"}
+            animate={reduce ? { opacity: 1 } : "open"}
+            exit={
+              reduce
+                ? { opacity: 0, transition: { duration: 0.12 } }
+                : { opacity: 0, height: 0, transition: { duration: 0.28, ease: POWER2_INOUT } }
+            }
+            onAnimationComplete={() => {
+              if (!open) return;
+              clearSubmenuArtifacts();
+              // the item stagger settles after the container's own tween —
+              // strip the filters again once it has finished writing them
+              setTimeout(clearSubmenuArtifacts, 500);
+            }}
           >
-            <span>{item}</span>
-            {item === "Triage" && <Badge kind="Beta" />}
-          </button>
-        ))}
-      </div>
-    </section>
+            {submenu.map((item) => (
+              <motion.button
+                type="button"
+                key={item}
+                variants={reduce ? undefined : SUBMENU_ITEM_VARIANTS}
+                whileTap={tap(reduce)}
+                transition={SPRING_PRESS}
+                className="flex h-[30px] w-full items-center text-left text-[12px] font-normal text-[#C5C1C9] hover:text-[#EEEAF0] lg:h-[34px] lg:text-[14px]"
+              >
+                <span>{item}</span>
+                {item === "Triage" && <Badge kind="Beta" />}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.section>
   );
 }
 
@@ -231,26 +316,11 @@ type ThemeId = (typeof themeOptions)[number]["id"];
 function ProfileMenu({ onClose }: { onClose: () => void }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState<ThemeId>("dark");
+  const reduce = useReducedMotion() ?? false;
 
   useEffect(() => {
     const el = menuRef.current;
     if (!el) return;
-
-    const mm = gsap.matchMedia();
-    mm.add(
-      {
-        ok: "(prefers-reduced-motion: no-preference)",
-        reduce: "(prefers-reduced-motion: reduce)",
-      },
-      (ctx) => {
-        const reduce = !!ctx.conditions?.reduce;
-        gsap.fromTo(
-          el,
-          { y: 8, scale: 0.98, autoAlpha: 0 },
-          { y: 0, scale: 1, autoAlpha: 1, duration: reduce ? 0 : 0.2, ease: "power2.out", transformOrigin: "bottom left" },
-        );
-      },
-    );
 
     const onPointerDown = (e: PointerEvent) => {
       if (!el.contains(e.target as Node)) onClose();
@@ -261,19 +331,22 @@ function ProfileMenu({ onClose }: { onClose: () => void }) {
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
     return () => {
-      mm.revert();
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [onClose]);
 
   return (
-    <div
+    <motion.div
       ref={menuRef}
       role="menu"
       aria-label="Account menu"
       // ponytail: anchored inside the overflow-hidden aside; portal it if it ever clips on short viewports
       className="absolute bottom-[calc(100%+10px)] left-3 right-3 z-50 rounded-[12px] border border-[#2d2d35] bg-[#232127] p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+      style={{ transformOrigin: "bottom left" }}
+      initial={reduce ? false : { y: 8, scale: 0.98, opacity: 0 }}
+      animate={{ y: 0, scale: 1, opacity: 1 }}
+      transition={{ duration: reduce ? 0 : 0.2, ease: POWER2_OUT }}
     >
       <div aria-hidden="true" className="absolute -bottom-[5px] left-4 size-2.5 rotate-45 border-b border-r border-[#2d2d35] bg-[#232127]" />
 
@@ -291,51 +364,56 @@ function ProfileMenu({ onClose }: { onClose: () => void }) {
         <span className="text-[13px] text-[#b3b0ba]">Theme</span>
         <div className="flex items-center gap-0.5 rounded-full bg-[#26262e] p-0.5">
           {themeOptions.map(({ id, label, Icon }) => (
-            <button
+            <motion.button
               type="button"
               key={id}
               aria-label={label}
               aria-pressed={theme === id}
               onClick={() => setTheme(id)}
+              whileTap={tap(reduce)}
+              transition={SPRING_PRESS}
               className={`flex size-6 items-center justify-center rounded-full transition-colors ${
                 theme === id ? "bg-[#edecf1] text-[#1a1a1a]" : "text-[#b3b0ba] hover:text-[#edecf1]"
               }`}
             >
               <Icon size={13} strokeWidth={2} aria-hidden="true" />
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
 
       <Divider />
 
-      <button type="button" role="menuitem" className={menuRowClass}>
+      <motion.button type="button" role="menuitem" className={menuRowClass} whileTap={tap(reduce)} transition={SPRING_PRESS}>
         <User size={15} strokeWidth={1.8} aria-hidden="true" />
         Profile Settings
-      </button>
-      <button type="button" role="menuitem" className={menuRowClass}>
+      </motion.button>
+      <motion.button type="button" role="menuitem" className={menuRowClass} whileTap={tap(reduce)} transition={SPRING_PRESS}>
         <ExternalLink size={15} strokeWidth={1.8} aria-hidden="true" />
         Refer and Earn
-      </button>
-      <button type="button" role="menuitem" className={`${menuRowClass} text-[#f2708a] hover:text-[#f2708a]`}>
+      </motion.button>
+      <motion.button type="button" role="menuitem" className={`${menuRowClass} text-[#f2708a] hover:text-[#f2708a]`} whileTap={tap(reduce)} transition={SPRING_PRESS}>
         <LogOut size={15} strokeWidth={1.8} aria-hidden="true" />
         Log out
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 }
 
 function BottomProfile() {
   const [open, setOpen] = useState(false);
+  const reduce = useReducedMotion() ?? false;
   const close = useCallback(() => setOpen(false), []);
 
   return (
     <footer className="relative shrink-0">
-      <button
+      <motion.button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
+        whileTap={tap(reduce)}
+        transition={SPRING_PRESS}
         className="flex w-full items-center px-[14px] py-[10px] text-left"
       >
         <img alt="Nafixhutao avatar" className="shrink-0 object-cover size-8 rounded-full" src="https://avatars.githubusercontent.com/u/135522402?v=4" />
@@ -344,7 +422,7 @@ function BottomProfile() {
           <p className="m-0 mt-[2px] text-[12px] leading-[16px] text-[oklch(0.585_0.0161_305)]">Admin</p>
         </div>
         <ChevronsUpDown size={12} strokeWidth={1.7} className="ml-auto shrink-0 text-[#737078]" aria-hidden="true" />
-      </button>
+      </motion.button>
       {open && <ProfileMenu onClose={close} />}
     </footer>
   );
@@ -353,77 +431,42 @@ function BottomProfile() {
 /** A reference-accurate, responsive navigation drawer. */
 export function Sidebar({ open, onClose }: SidebarProps) {
   const [reviewOpen, setReviewOpen] = useState(true);
-  const asideRef = useRef<HTMLElement>(null);
-  const overlayRef = useRef<HTMLButtonElement>(null);
-
-  // Entrance: top-level nav rows stagger in once.
-  useEffect(() => {
-    const aside = asideRef.current;
-    if (!aside) return;
-    const mm = gsap.matchMedia();
-    mm.add(
-      {
-        ok: "(prefers-reduced-motion: no-preference)",
-        reduce: "(prefers-reduced-motion: reduce)",
-      },
-      (ctx) => {
-        const reduce = !!ctx.conditions?.reduce;
-        gsap.from(aside.querySelectorAll("nav > button"), {
-        y: 8,
-        autoAlpha: 0,
-        duration: reduce ? 0 : 0.35,
-        stagger: reduce ? 0 : 0.04,
-        ease: "power2.out",
-        clearProps: "all",
-      });
-    });
-    return () => mm.revert();
-  }, []);
-
-  // Mobile drawer slide + overlay fade.
-  useEffect(() => {
-    const aside = asideRef.current;
-    const overlay = overlayRef.current;
-    if (!aside || !overlay) return;
-    const mm = gsap.matchMedia();
-    mm.add(
-      {
-        isDesktop: "(min-width: 1024px)",
-        isMobile: "(max-width: 1023px)",
-        reduce: "(prefers-reduced-motion: reduce)",
-      },
-      (ctx) => {
-        const { isDesktop, isMobile } = ctx.conditions ?? {};
-        const reduce = !!ctx.conditions?.reduce;
-        const duration = reduce ? 0 : 0.35;
-        if (isDesktop) {
-          gsap.set(aside, { xPercent: 0 });
-        } else if (isMobile) {
-          gsap.to(aside, { xPercent: open ? 0 : -120, duration, ease: "power3.out", overwrite: "auto" });
-        }
-        gsap.to(overlay, { autoAlpha: open ? 1 : 0, duration });
-      },
-    );
-    return () => mm.revert();
-  }, [open]);
+  const reduce = useReducedMotion() ?? false;
+  const isMobile = useMediaQuery("(max-width: 1023px)");
 
   return (
     <>
-      <button
-        ref={overlayRef}
+      <motion.button
         type="button"
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+        initial={false}
+        animate={{ opacity: isMobile && open ? 1 : 0 }}
+        transition={reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
+        className={`fixed inset-0 z-40 bg-black/50 lg:hidden ${isMobile && open ? "" : "pointer-events-none"}`}
         aria-label="Close sidebar overlay"
         tabIndex={open ? 0 : -1}
       />
-      <aside
-        ref={asideRef}
+      <motion.aside
         aria-label="Main navigation"
-        className="fixed bottom-1 left-[7vw] top-1 z-50 flex w-[88vw] max-w-[360px] flex-col overflow-hidden rounded-[7px] border border-[#302E34] bg-[#232127] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.025)] lg:bottom-auto lg:left-0 lg:top-0 lg:h-dvh lg:w-[268px] lg:min-w-[268px] lg:max-w-[268px] lg:rounded-none lg:border-0 lg:border-r lg:border-[#322F37] lg:bg-[#121014] lg:shadow-none"
+        initial={false}
+        animate={
+          reduce
+            ? { x: 0, opacity: isMobile ? (open ? 1 : 0) : 1 }
+            : { x: isMobile && !open ? "-120%" : "0%", opacity: 1 }
+        }
+        transition={reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
+        className={`fixed bottom-1 left-[7vw] top-1 z-50 flex w-[88vw] max-w-[360px] flex-col overflow-hidden rounded-[7px] border border-[#302E34] bg-[#232127] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.025)] lg:bottom-auto lg:left-0 lg:top-0 lg:h-dvh lg:w-[268px] lg:min-w-[268px] lg:max-w-[268px] lg:rounded-none lg:border-0 lg:border-r lg:border-[#322F37] lg:bg-[#121014] lg:shadow-none ${
+          isMobile && !open ? "pointer-events-none" : ""
+        }`}
       >
         <Header onClose={onClose} />
-        <nav className="sidebar-scrollbar min-h-0 flex-1 overflow-y-auto pb-1" aria-label="Sidebar links">
+        <motion.nav
+          className="sidebar-scrollbar min-h-0 flex-1 overflow-y-auto pb-1"
+          aria-label="Sidebar links"
+          variants={NAV_VARIANTS}
+          initial={reduce ? false : "hidden"}
+          animate="visible"
+        >
           <NavRow
             icon={NavIcon(Search)}
             label="Search"
@@ -439,21 +482,32 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <NavRow icon={NavIcon(Users)} label="Account" expandable />
           <NavRow icon={NavIcon(BookOpen)} label="Documentation" />
           <NavRow icon={NavIcon(Headphones)} label="Contact Support" />
-        </nav>
-        {reviewOpen && (
-          <div className="relative flex shrink-0 items-center justify-center px-2 py-3">
-            <div className="absolute inset-x-2 h-px bg-[#322F37]" />
-            <button
-              type="button"
-              className="relative z-10 inline-flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-[#322F37] bg-[#121014] px-[10px] text-[12px] font-medium leading-[16px] text-[oklch(0.949_0.0035_305)] hover:bg-white/[0.04]"
+        </motion.nav>
+        <AnimatePresence>
+          {reviewOpen && (
+            <motion.div
+              key="view-more"
+              initial={reduce ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6, transition: { duration: 0.18, ease: EASE_OUT } }}
+              transition={reduce ? REDUCED_TRANSITION : { duration: 0.25, ease: EASE_OUT }}
+              className="relative flex shrink-0 items-center justify-center px-2 py-3"
             >
-              <ChevronDown size={12} strokeWidth={2} className="shrink-0" />
-              View more
-            </button>
-          </div>
-        )}
+              <div className="absolute inset-x-2 h-px bg-[#322F37]" />
+              <motion.button
+                type="button"
+                whileTap={tap(reduce)}
+                transition={SPRING_PRESS}
+                className="relative z-10 inline-flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-[#322F37] bg-[#121014] px-[10px] text-[12px] font-medium leading-[16px] text-[oklch(0.949_0.0035_305)] hover:bg-white/[0.04]"
+              >
+                <ChevronDown size={12} strokeWidth={2} className="shrink-0" />
+                View more
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <BottomProfile />
-      </aside>
+      </motion.aside>
     </>
   );
 }
