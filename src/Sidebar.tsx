@@ -1,8 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { PixelSkeleton } from "./PixelSkeleton";
+import {
+  EASE_DRAWER,
+  EASE_OUT,
+  LABEL_ENTER_TRANSITION,
+  LABEL_EXIT_TRANSITION,
+  PANEL_TRANSITION,
+  POWER2_INOUT,
+  POWER2_OUT,
+  REDUCED_TRANSITION,
+  SIDEBAR_MORPH_TRANSITION,
+  SPRING_LAYOUT,
+  SPRING_PRESS,
+  SUBMENU_TRANSITION,
+} from "@/lib/ease";
+import { cn } from "@/lib/utils";
 import {
   BookOpen,
   ChevronDown,
@@ -25,21 +41,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Motion tokens taken from the beui animated-sidebar (lib/ease).
-const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
-const EASE_DRAWER: [number, number, number, number] = [0.32, 0.72, 0, 1];
-const SPRING_PRESS = { type: "spring", stiffness: 500, damping: 30, mass: 0.6 } as const;
-const SPRING_LAYOUT = { type: "spring", stiffness: 360, damping: 32, mass: 0.6 } as const;
-
-const PANEL_TRANSITION = { duration: 0.36, ease: EASE_DRAWER } as const;
-const REDUCED_TRANSITION = { duration: 0.16, ease: EASE_OUT } as const;
-
-const SUBMENU_TRANSITION = { duration: 0.22, ease: EASE_OUT } as const;
-
-// gsap power2.out — keeps the previous entrance/popover feel
-const POWER2_OUT: [number, number, number, number] = [0.33, 1, 0.68, 1];
-// gsap power2.inOut — symmetric ease for the height expand/collapse
-const POWER2_INOUT: [number, number, number, number] = [0.45, 0, 0.55, 1];
+/** Desktop rail width when collapsed to icons only — measured from the
+ * reference rail capture: 51px content + 1px border. */
+const RAIL_WIDTH = 52;
+/** Expanded desktop sidebar width. */
+const PANEL_WIDTH = 268;
 
 // Open keeps the original morph: clip-path reveal with a staggered blur-up.
 // The close is GSAP-style — the measured height tweens to 0 while fading, so
@@ -76,6 +82,15 @@ const NAV_ITEM_VARIANTS: Variants = {
 
 const tap = (reduce: boolean) => (reduce ? undefined : { scale: 0.98 });
 
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
 function subscribeMediaQuery(query: string, callback: () => void) {
   const mql = window.matchMedia(query);
   mql.addEventListener("change", callback);
@@ -106,14 +121,74 @@ type NavRowProps = {
   badge?: BadgeKind;
   expandable?: boolean;
   labelClassName?: string;
+  /** Renders the shared layoutId pill behind the row when selected. */
+  isActive?: boolean;
+  /** Shared layoutId — every row in a sidebar passes the same one so the
+   * active pill morphs between rows instead of remounting. */
+  layoutId?: string;
+  onSelect?: () => void;
+  /** Desktop rail mode: labels fade out and the row keeps its icon only. */
+  collapsed?: boolean;
 };
 
 const NavIcon = (Icon: LucideIcon) => (
   <Icon size={15} strokeWidth={1.8} className="shrink-0 text-[#AAA6AE]" />
 );
 
+// `relative isolate` turns the row into its own stacking context so the
+// active pill (-z-10) paints above the row background but below the content.
 const rowClass =
-  "flex h-[34px] w-full items-center gap-[10px] px-4 text-left text-[13px] font-normal text-[#C5C1C9] transition-colors hover:bg-white/[0.035] lg:h-[38px] lg:text-[14px]";
+  "relative isolate flex h-[34px] w-full items-center gap-[10px] px-4 text-left text-[13px] font-normal text-[#C5C1C9] transition-colors hover:bg-white/[0.035] lg:h-[38px] lg:text-[14px]";
+
+/** Rail-only separator between nav groups: folds away while the panel is
+ * expanded (reference rail shows the two dividers at 8px/12px gutters). */
+function RailDivider({ collapsed }: { collapsed: boolean }) {
+  return (
+    <motion.div
+      aria-hidden="true"
+      initial={false}
+      animate={{
+        opacity: collapsed ? 1 : 0,
+        height: collapsed ? 1 : 0,
+        marginTop: collapsed ? 5 : 0,
+        marginBottom: collapsed ? 5 : 0,
+      }}
+      transition={collapsed ? LABEL_ENTER_TRANSITION : LABEL_EXIT_TRANSITION}
+      className="pointer-events-none ml-2 mr-3 overflow-hidden bg-[#322F37]"
+    />
+  );
+}
+
+/** The active-row pill from the beui animated-sidebar: one motion.span per
+ * sidebar sharing a layoutId, so switching rows morphs the box across. */
+function ActiveRowPill({ layoutId, reduce }: { layoutId?: string; reduce: boolean }) {
+  if (!layoutId) return null;
+  return (
+    <motion.span
+      aria-hidden="true"
+      layoutId={layoutId}
+      transition={reduce ? { duration: 0 } : SPRING_LAYOUT}
+      className="absolute inset-0 -z-10 bg-white/[0.06]"
+    />
+  );
+}
+
+/** Crossfades a label while the rail collapses/expands (beui label
+ * transitions): leaves fast so the shrinking width never clips mid-word,
+ * returns slightly delayed once the panel has opened around it. */
+function RailLabel({ collapsed, className, children }: { collapsed: boolean; className?: string; children: ReactNode }) {
+  return (
+    <motion.span
+      initial={false}
+      animate={{ opacity: collapsed ? 0 : 1, x: collapsed ? -6 : 0 }}
+      transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
+      aria-hidden={collapsed}
+      className={cn("min-w-0", collapsed && "pointer-events-none", className)}
+    >
+      {children}
+    </motion.span>
+  );
+}
 
 function Badge({ kind }: { kind: BadgeKind }) {
   return kind === "New" ? (
@@ -127,19 +202,34 @@ function Badge({ kind }: { kind: BadgeKind }) {
   );
 }
 
-function ChevronToggle({ className = "", gap = 0.6 }: { className?: string; gap?: number }) {
+// Dual chevron that pinches toward its resting position while a submenu is
+// open — the expandable affordance reacts to state instead of sitting still.
+function ChevronToggle({
+  className = "",
+  open = false,
+  reduce = false,
+}: {
+  className?: string;
+  open?: boolean;
+  reduce?: boolean;
+}) {
+  const transition = reduce ? { duration: 0 } : SPRING_LAYOUT;
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" className={className} aria-hidden="true">
-      <path
+      <motion.path
         fillRule="evenodd"
         clipRule="evenodd"
-        transform={`translate(0 ${-gap})`}
+        initial={false}
+        animate={{ y: open ? 0 : -0.6 }}
+        transition={transition}
         d="M10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z"
       />
-      <path
+      <motion.path
         fillRule="evenodd"
         clipRule="evenodd"
-        transform={`translate(0 ${gap})`}
+        initial={false}
+        animate={{ y: open ? 0 : 0.6 }}
+        transition={transition}
         d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06Z"
       />
     </svg>
@@ -163,29 +253,77 @@ function BrandIcon({ brand }: { brand: "slack" | "discord" }) {
       <svg viewBox="-32 -60.5 320 320" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid">
         <path
           fillRule="nonzero"
-          d="M216.856339,16.5966031 C200.285002,8.84328665 182.566144,3.2084988 164.041564,0 C161.766523,4.11318106 159.108624,9.64549908 157.276099,14.0464379 C137.583995,11.0849896 118.072967,11.0849896 98.7430163,14.0464379 C96.9108417,9.64549908 94.1925838,4.11318106 91.8971895,0 C73.3526068,3.2084988 55.6133949,8.86399117 39.0420583,16.6376612 C5.61752293,67.146514 -3.4433191,116.400813 1.08711069,164.955721 C23.2560196,181.510915 44.7403634,191.567697 65.8621325,198.148576 C71.0772151,190.971126 75.7283628,183.341335 79.7352139,175.300261 C72.104019,172.400575 64.7949724,168.822202 57.8887866,164.667963 C59.7209612,163.310589 61.5131304,161.891452 63.2445898,160.431257 C105.36741,180.133187 151.134928,180.133187 192.754523,160.431257 C194.506336,161.891452 196.298154,163.310589 198.110326,164.667963 C191.183787,168.842556 183.854737,172.420929 176.223542,175.320965 C180.230393,183.341335 184.861538,190.991831 190.096624,198.16893 C211.238746,191.588051 232.743023,181.531619 254.911949,164.955721 C260.227747,108.668201 245.831087,59.8662432 216.856339,16.5966031 Z M85.4738752,135.09489 C72.8290281,135.09489 62.4592217,123.290155 62.4592217,108.914901 C62.4592217,94.5396472 72.607595,82.7145587 85.4738752,82.7145587 C98.3405064,82.7145587 108.709962,94.5189427 108.488529,108.914901 C108.508531,123.290155 98.3405064,135.09489 85.4738752,135.09489 Z M170.525237,135.09489 C157.88039,135.09489 147.510584,123.290155 147.510584,108.914901 C147.510584,94.5396472 157.658606,82.7145587 170.525237,82.7145587 C183.391518,82.7145587 193.761324,94.5189427 193.539891,108.914901 C193.539891,123.290155 183.391518,135.09489 170.525237,135.09489 Z"
+          d="M216.856339,16.5966031 C200.285002,8.84328665 182.566144,3.2084988 164.041564,0 C161.766523,4.11318106 159.108624,9.64549908 157.276099,14.0464379 C137.583995,11.0849896 118.072967,11.0849896 98.7430163,14.0464379 C96.9108417,9.64549908 94.1925838,4.11318106 91.8971895,0 C73.3526068,3.2084988 55.6133949,8.86399117 39.0420583,16.6376612 C5.61752293,67.146514 -3.4433191,116.400813 1.08711069,164.955721 C23.2560196,181.510915 44.7403634,191.567697 65.8621325,198.148576 C71.0772151,190.971126 75.7283628,183.341335 79.7352139,175.300261 C72.104019,172.400575 64.7949724,168.822202 57.8887866,164.667963 C59.7209612,163.310589 61.5131304,161.891452 63.2445898,160.431257 C105.36741,180.133187 151.134928,180.133187 192.754523,160.431257 C194.506336,161.891452 196.298154,163.310589 198.110326,164.667963 C191.183787,168.842556 183.854737,172.420929 176.223542,175.320965 C180.230393,183.341335 184.861538,190.991831 190.096624,198.16893 C211.238746,191.588051 232.743023,181.531619 254.911949,164.955721 C260.227747,108.666201 245.831087,59.8662432 216.856339,16.5966031 ZM85.4738752,135.09489 C72.8290281,135.09489 62.4592217,123.290155 62.4592217,108.914901 C62.4592217,94.5396472 72.607595,82.7145857 85.4738752,82.7145857 C98.3405064,82.7145857 108.709962,94.5189427 108.488529,108.914901 C108.508531,123.290155 98.3405064,135.09489 85.4738752,135.09489 ZM170.525237,135.09489 C157.88039,135.09489 147.510584,123.290155 147.510584,108.914901 C147.510584,94.5396472 157.658606,82.7145857 170.525237,82.7145857 C183.391518,82.7145857 193.761324,94.5189427 193.539891,108.914901 C193.539891,123.290155 183.391518,135.09489 170.525237,135.09489 Z"
         />
       </svg>
     </span>
   );
 }
 
-function NavRow({ icon, label, badge, expandable = false, labelClassName = "" }: NavRowProps) {
+function NavRow({
+  icon,
+  label,
+  badge,
+  expandable = false,
+  labelClassName = "",
+  isActive = false,
+  layoutId,
+  onSelect,
+  collapsed = false,
+}: NavRowProps) {
   const reduce = useReducedMotion() ?? false;
   return (
     // layout wrapper lets rows below an opening/closing submenu glide
     <motion.div layout="position" transition={SPRING_LAYOUT} variants={NAV_ITEM_VARIANTS}>
-      <motion.button type="button" className={rowClass} whileTap={tap(reduce)} transition={SPRING_PRESS}>
+      <motion.button
+        type="button"
+        className={rowClass}
+        onClick={onSelect}
+        aria-current={isActive ? "page" : undefined}
+        whileTap={tap(reduce)}
+        transition={SPRING_PRESS}
+      >
+        {isActive && <ActiveRowPill layoutId={layoutId} reduce={reduce} />}
         {icon}
-        <span className={`flex-1 origin-left truncate ${labelClassName}`}>{label}</span>
-        {badge && <Badge kind={badge} />}
-        {expandable && <ChevronToggle className="ml-auto size-[13px] shrink-0 text-[#737078]" />}
+        <RailLabel collapsed={collapsed} className={`flex-1 origin-left truncate ${labelClassName}`}>
+          {label}
+        </RailLabel>
+        {badge && (
+          <motion.span
+            initial={false}
+            aria-hidden={collapsed}
+            animate={{ opacity: collapsed ? 0 : 1, maxWidth: collapsed ? 0 : 80 }}
+            transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
+            className="overflow-hidden"
+          >
+            <Badge kind={badge} />
+          </motion.span>
+        )}
+        {expandable && (
+          <motion.span
+            initial={false}
+            aria-hidden={collapsed}
+            animate={{ opacity: collapsed ? 0 : 1, maxWidth: collapsed ? 0 : 20 }}
+            transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
+            className="overflow-hidden"
+          >
+            <ChevronToggle className="size-[13px] shrink-0 text-[#737078]" />
+          </motion.span>
+        )}
       </motion.button>
     </motion.div>
   );
 }
 
-function Header({ onClose }: Pick<SidebarProps, "onClose">) {
+function Header({
+  onClose,
+  collapsed = false,
+  onToggleCollapse,
+}: {
+  onClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}) {
   const [planLoading, setPlanLoading] = useState(true);
   const reduce = useReducedMotion() ?? false;
   useEffect(() => {
@@ -195,40 +333,83 @@ function Header({ onClose }: Pick<SidebarProps, "onClose">) {
 
   return (
     <header className="flex h-[44px] shrink-0 items-center px-4 lg:h-[48px]">
-      <img alt="Nafixhutao avatar" className="shrink-0 object-cover size-5 rounded-md" src="https://avatars.githubusercontent.com/u/135522402?s=80&v=4" />
-      <span className="ml-2 text-[14px] font-medium tracking-[-0.01em] leading-[20px] text-[oklch(0.949_0.0035_305)]">Nafixhutao</span>
-      {planLoading ? (
-        <PixelSkeleton className="ml-2 h-5 w-14" />
-      ) : (
-        <span className="ml-2 rounded-[5px] bg-[#201E22] px-[6px] py-[2px] text-[12px] font-medium leading-[16px] text-[oklch(0.767_0.0105_305)]">Pro Plus</span>
-      )}
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="ml-2 size-[13px] shrink-0 text-[#737078]" aria-hidden="true">
-        <path d="m7 8 5-5 5 5" />
-        <path d="m7 16 5 5 5-5" />
-      </svg>
+      {/* the identity slot folds away entirely in the rail — it must not
+       * reserve space, or it pushes the collapse toggle out of the rail */}
+      <motion.div
+        initial={false}
+        animate={{ maxWidth: collapsed ? 0 : 220 }}
+        transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
+        className="flex min-w-0 items-center overflow-hidden"
+      >
+        <motion.img
+          alt="Nafixhutao avatar"
+          initial={false}
+          animate={{ opacity: collapsed ? 0 : 1 }}
+          transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
+          className="shrink-0 object-cover size-5 rounded-md"
+          src="https://avatars.githubusercontent.com/u/135522402?s=80&v=4"
+        />
+        <RailLabel collapsed={collapsed} className="flex items-center">
+          <span className="ml-2 text-[14px] font-medium tracking-[-0.01em] leading-[20px] text-[oklch(0.949_0.0035_305)]">Nafixhutao</span>
+          {planLoading ? (
+            <PixelSkeleton className="ml-2 h-5 w-14" />
+          ) : (
+            <span className="ml-2 rounded-[5px] bg-[#201E22] px-[6px] py-[2px] text-[12px] font-medium leading-[16px] text-[oklch(0.767_0.0105_305)]">Pro Plus</span>
+          )}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="ml-2 size-[13px] shrink-0 text-[#737078]" aria-hidden="true">
+            <path d="m7 8 5-5 5 5" />
+            <path d="m7 16 5 5 5-5" />
+          </svg>
+        </RailLabel>
+      </motion.div>
       <motion.button
         type="button"
         onClick={onClose}
         whileTap={tap(reduce)}
         transition={SPRING_PRESS}
-        className="ml-auto inline-flex h-6 w-6 items-center justify-center text-[#AAA6AE] hover:text-[#EEEAF0] lg:hidden"
+        className="ml-auto inline-flex h-6 w-6 items-center justify-center text-[#AAA6AE] transition-colors hover:text-[#EEEAF0] lg:hidden"
         aria-label="Close sidebar"
       >
         <X size={14} strokeWidth={1.8} />
       </motion.button>
-      <span className="group/btn ml-auto hidden shrink-0 text-[#AAA6AE] lg:block">
+      <motion.button
+        type="button"
+        onClick={onToggleCollapse}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-expanded={!collapsed}
+        whileTap={tap(reduce)}
+        transition={SPRING_PRESS}
+        className="group/btn ml-auto hidden shrink-0 text-[#AAA6AE] transition-colors hover:text-[#EEEAF0] lg:block"
+      >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="size-4" aria-hidden="true">
           <rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
           <rect x="4" y="5" height="6" rx="0.75" fill="currentColor" className="transition-[width] duration-300 ease-cui-out-expo [width:4px] group-hover/btn:[width:2.5px]" />
         </svg>
-      </span>
+      </motion.button>
     </header>
   );
 }
 
-function ReviewSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+function ReviewSection({
+  open,
+  onToggle,
+  isActive = false,
+  layoutId,
+  onActivate,
+  collapsed = false,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  isActive?: boolean;
+  layoutId?: string;
+  onActivate?: () => void;
+  collapsed?: boolean;
+}) {
   const reduce = useReducedMotion() ?? false;
   const submenuRef = useRef<HTMLDivElement>(null);
+  // beui pattern: choosing a child highlights it statically and moves the
+  // shared pill onto the parent group row.
+  const [activeItem, setActiveItem] = useState<string | null>(null);
   const submenu = ["Triage", "Repositories", "Integrations", "Learnings", "Caches", "Organization Settings"];
 
   // A resting filter forces a compositing layer and flips the submenu text
@@ -249,15 +430,28 @@ function ReviewSection({ open, onToggle }: { open: boolean; onToggle: () => void
         className={rowClass}
         onClick={onToggle}
         aria-expanded={open}
+        aria-current={isActive ? "page" : undefined}
         whileTap={tap(reduce)}
         transition={SPRING_PRESS}
       >
+        {isActive && <ActiveRowPill layoutId={layoutId} reduce={reduce} />}
         <FileText size={15} strokeWidth={1.8} className="shrink-0 text-[#AAA6AE]" />
-        <span>Review</span>
-        <ChevronToggle className="ml-auto size-[13px] shrink-0 text-[#737078]" />
+        <RailLabel collapsed={collapsed} className="flex-1">
+          Review
+        </RailLabel>
+        <motion.span
+          initial={false}
+          aria-hidden={collapsed}
+          animate={{ opacity: collapsed ? 0 : 1, maxWidth: collapsed ? 0 : 20 }}
+          transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
+          className="overflow-hidden"
+        >
+          <ChevronToggle className="size-[13px] shrink-0 text-[#737078]" open={open} reduce={reduce} />
+        </motion.span>
       </motion.button>
+      {/* a submenu cannot render inside the icon rail (beui: !panel.collapsed) */}
       <AnimatePresence>
-        {open && (
+        {open && !collapsed && (
           <motion.div
             key="review-submenu"
             ref={submenuRef}
@@ -283,9 +477,16 @@ function ReviewSection({ open, onToggle }: { open: boolean; onToggle: () => void
                 type="button"
                 key={item}
                 variants={reduce ? undefined : SUBMENU_ITEM_VARIANTS}
+                onClick={() => {
+                  setActiveItem(item);
+                  onActivate?.();
+                }}
+                aria-current={activeItem === item ? "page" : undefined}
                 whileTap={tap(reduce)}
                 transition={SPRING_PRESS}
-                className="flex h-[30px] w-full items-center text-left text-[12px] font-normal text-[#C5C1C9] hover:text-[#EEEAF0] lg:h-[34px] lg:text-[14px]"
+                className={`flex h-[30px] w-full items-center text-left text-[12px] font-normal transition-colors lg:h-[34px] lg:text-[14px] ${
+                  activeItem === item ? "bg-white/[0.03] text-[#EEEAF0]" : "text-[#C5C1C9] hover:text-[#EEEAF0]"
+                }`}
               >
                 <span>{item}</span>
                 {item === "Triage" && <Badge kind="Beta" />}
@@ -400,7 +601,13 @@ function ProfileMenu({ onClose }: { onClose: () => void }) {
   );
 }
 
-function BottomProfile() {
+function BottomProfile({
+  collapsed = false,
+  onToggleCollapse,
+}: {
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion() ?? false;
   const close = useCallback(() => setOpen(false), []);
@@ -409,105 +616,289 @@ function BottomProfile() {
     <footer className="relative shrink-0">
       <motion.button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          // the profile menu cannot live in the rail either — unfold first
+          if (collapsed) onToggleCollapse?.();
+          else setOpen((v) => !v);
+        }}
         aria-haspopup="menu"
         aria-expanded={open}
         whileTap={tap(reduce)}
         transition={SPRING_PRESS}
-        className="flex w-full items-center px-[14px] py-[10px] text-left"
+        className="flex w-full items-center px-[14px] py-[10px] text-left transition-colors hover:bg-white/[0.035]"
       >
-        <img alt="Nafixhutao avatar" className="shrink-0 object-cover size-8 rounded-full" src="https://avatars.githubusercontent.com/u/135522402?v=4" />
-        <div className="ml-2 min-w-0 leading-tight">
-          <p className="m-0 truncate text-[14px] leading-[20px] text-[oklch(0.767_0.0105_305)]">Nafixhutao</p>
-          <p className="m-0 mt-[2px] text-[12px] leading-[16px] text-[oklch(0.585_0.0161_305)]">Admin</p>
-        </div>
-        <ChevronsUpDown size={12} strokeWidth={1.7} className="ml-auto shrink-0 text-[#737078]" aria-hidden="true" />
+        {/* rail shows a small 20px avatar, the panel wraps it in the full row */}
+        <motion.img
+          alt="Nafixhutao avatar"
+          initial={false}
+          animate={{ width: collapsed ? 20 : 32, height: collapsed ? 20 : 32 }}
+          transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
+          className="shrink-0 object-cover rounded-full"
+          src="https://avatars.githubusercontent.com/u/135522402?v=4"
+        />
+        <RailLabel collapsed={collapsed} className="flex min-w-0 flex-1 items-center">
+          <div className="ml-2 min-w-0 leading-tight">
+            <p className="m-0 truncate text-[14px] leading-[20px] text-[oklch(0.767_0.0105_305)]">Nafixhutao</p>
+            <p className="m-0 mt-[2px] text-[12px] leading-[16px] text-[oklch(0.585_0.0161_305)]">Admin</p>
+          </div>
+          <ChevronsUpDown size={12} strokeWidth={1.7} className="ml-auto shrink-0 text-[#737078]" aria-hidden="true" />
+        </RailLabel>
       </motion.button>
       {open && <ProfileMenu onClose={close} />}
     </footer>
   );
 }
 
-/** A reference-accurate, responsive navigation drawer. */
-export function Sidebar({ open, onClose }: SidebarProps) {
+/** Everything inside the panel, shared by the desktop rail and mobile sheet. */
+function SidebarContent({
+  onMobileClose,
+  collapsed = false,
+  onToggleCollapse,
+}: {
+  onMobileClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}) {
   const [reviewOpen, setReviewOpen] = useState(true);
+  const [active, setActive] = useState<string | null>(null);
+  const pillId = useId();
   const reduce = useReducedMotion() ?? false;
-  const isMobile = useMediaQuery("(max-width: 1023px)");
+
+  // Selecting from the collapsed rail unfolds the panel first (beui: a
+  // submenu cannot live in the rail, so selecting expands it).
+  const select = (label: string) => {
+    setActive(label);
+    if (collapsed) onToggleCollapse?.();
+  };
 
   return (
     <>
-      <motion.button
-        type="button"
-        onClick={onClose}
-        initial={false}
-        animate={{ opacity: isMobile && open ? 1 : 0 }}
-        transition={reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
-        className={`fixed inset-0 z-40 bg-black/50 lg:hidden ${isMobile && open ? "" : "pointer-events-none"}`}
-        aria-label="Close sidebar overlay"
-        tabIndex={open ? 0 : -1}
-      />
-      <motion.aside
-        aria-label="Main navigation"
-        initial={false}
-        animate={
-          reduce
-            ? { x: 0, opacity: isMobile ? (open ? 1 : 0) : 1 }
-            : { x: isMobile && !open ? "-120%" : "0%", opacity: 1 }
-        }
-        transition={reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
-        className={`fixed bottom-1 left-[7vw] top-1 z-50 flex w-[88vw] max-w-[360px] flex-col overflow-hidden rounded-[7px] border border-[#302E34] bg-[#232127] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.025)] lg:bottom-auto lg:left-0 lg:top-0 lg:h-dvh lg:w-[268px] lg:min-w-[268px] lg:max-w-[268px] lg:rounded-none lg:border-0 lg:border-r lg:border-[#322F37] lg:bg-[#121014] lg:shadow-none ${
-          isMobile && !open ? "pointer-events-none" : ""
-        }`}
+      <Header onClose={onMobileClose} collapsed={collapsed} onToggleCollapse={onToggleCollapse} />
+      <motion.nav
+        className="sidebar-scrollbar min-h-0 flex-1 overflow-y-auto pb-1"
+        aria-label="Sidebar links"
+        variants={NAV_VARIANTS}
+        initial={reduce ? false : "hidden"}
+        animate="visible"
       >
-        <Header onClose={onClose} />
-        <motion.nav
-          className="sidebar-scrollbar min-h-0 flex-1 overflow-y-auto pb-1"
-          aria-label="Sidebar links"
-          variants={NAV_VARIANTS}
-          initial={reduce ? false : "hidden"}
-          animate="visible"
-        >
-          <NavRow
-            icon={NavIcon(Search)}
-            label="Search"
-            labelClassName="text-[14px] leading-[20px] text-[oklch(0.949_0.0035_305)]"
-          />
-          <NavRow icon={NavIcon(House)} label="Explore" />
-          <NavRow icon={NavIcon(PieChart)} label="Analytics" expandable />
-          <ReviewSection open={reviewOpen} onToggle={() => setReviewOpen((value) => !value)} />
-          <NavRow icon={<BrandIcon brand="slack" />} label="Slack" badge="New" expandable />
-          <NavRow icon={<BrandIcon brand="discord" />} label="Discord" expandable />
-          <NavRow icon={NavIcon(ShieldCheck)} label="Security" badge="New" expandable />
-          <NavRow icon={NavIcon(ReceiptText)} label="Plan" expandable />
-          <NavRow icon={NavIcon(Users)} label="Account" expandable />
-          <NavRow icon={NavIcon(BookOpen)} label="Documentation" />
-          <NavRow icon={NavIcon(Headphones)} label="Contact Support" />
-        </motion.nav>
-        <AnimatePresence>
-          {reviewOpen && (
-            <motion.div
-              key="view-more"
-              initial={reduce ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 6, transition: { duration: 0.18, ease: EASE_OUT } }}
-              transition={reduce ? REDUCED_TRANSITION : { duration: 0.25, ease: EASE_OUT }}
-              className="relative flex shrink-0 items-center justify-center px-2 py-3"
+        <NavRow
+          icon={NavIcon(Search)}
+          label="Search"
+          labelClassName="text-[14px] leading-[20px] text-[oklch(0.949_0.0035_305)]"
+          isActive={active === "Search"}
+          layoutId={pillId}
+          onSelect={() => select("Search")}
+          collapsed={collapsed}
+        />
+        <NavRow icon={NavIcon(House)} label="Explore" isActive={active === "Explore"} layoutId={pillId} onSelect={() => select("Explore")} collapsed={collapsed} />
+        <NavRow icon={NavIcon(PieChart)} label="Analytics" expandable isActive={active === "Analytics"} layoutId={pillId} onSelect={() => select("Analytics")} collapsed={collapsed} />
+        <RailDivider collapsed={collapsed} />
+        <ReviewSection
+          open={reviewOpen}
+          onToggle={() => setReviewOpen((value) => !value)}
+          isActive={active === "Review"}
+          layoutId={pillId}
+          onActivate={() => select("Review")}
+          collapsed={collapsed}
+        />
+        <NavRow icon={<BrandIcon brand="slack" />} label="Slack" badge="New" expandable isActive={active === "Slack"} layoutId={pillId} onSelect={() => select("Slack")} collapsed={collapsed} />
+        <NavRow icon={<BrandIcon brand="discord" />} label="Discord" expandable isActive={active === "Discord"} layoutId={pillId} onSelect={() => select("Discord")} collapsed={collapsed} />
+        <NavRow icon={NavIcon(ShieldCheck)} label="Security" badge="New" expandable isActive={active === "Security"} layoutId={pillId} onSelect={() => select("Security")} collapsed={collapsed} />
+        <NavRow icon={NavIcon(ReceiptText)} label="Plan" expandable isActive={active === "Plan"} layoutId={pillId} onSelect={() => select("Plan")} collapsed={collapsed} />
+        <RailDivider collapsed={collapsed} />
+        <NavRow icon={NavIcon(Users)} label="Account" expandable isActive={active === "Account"} layoutId={pillId} onSelect={() => select("Account")} collapsed={collapsed} />
+        <NavRow icon={NavIcon(BookOpen)} label="Documentation" isActive={active === "Documentation"} layoutId={pillId} onSelect={() => select("Documentation")} collapsed={collapsed} />
+        <NavRow icon={NavIcon(Headphones)} label="Contact Support" isActive={active === "Contact Support"} layoutId={pillId} onSelect={() => select("Contact Support")} collapsed={collapsed} />
+      </motion.nav>
+      <AnimatePresence>
+        {reviewOpen && !collapsed && (
+          <motion.div
+            key="view-more"
+            initial={reduce ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6, transition: { duration: 0.18, ease: EASE_OUT } }}
+            transition={reduce ? REDUCED_TRANSITION : { duration: 0.25, ease: EASE_OUT }}
+            className="relative flex shrink-0 items-center justify-center px-2 py-3"
+          >
+            <div className="absolute inset-x-2 h-px bg-[#322F37]" />
+            <motion.button
+              type="button"
+              whileTap={tap(reduce)}
+              transition={SPRING_PRESS}
+              className="relative z-10 inline-flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-[#322F37] bg-[#121014] px-[10px] text-[12px] font-medium leading-[16px] text-[oklch(0.949_0.0035_305)] transition-colors hover:bg-white/[0.04]"
             >
-              <div className="absolute inset-x-2 h-px bg-[#322F37]" />
-              <motion.button
-                type="button"
-                whileTap={tap(reduce)}
-                transition={SPRING_PRESS}
-                className="relative z-10 inline-flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-[#322F37] bg-[#121014] px-[10px] text-[12px] font-medium leading-[16px] text-[oklch(0.949_0.0035_305)] hover:bg-white/[0.04]"
-              >
-                <ChevronDown size={12} strokeWidth={2} className="shrink-0" />
-                View more
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <BottomProfile />
-      </motion.aside>
+              <ChevronDown size={12} strokeWidth={2} className="shrink-0" />
+              View more
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <BottomProfile collapsed={collapsed} onToggleCollapse={onToggleCollapse} />
     </>
   );
+}
+
+function DesktopSidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+  const reduce = useReducedMotion() ?? false;
+
+  return (
+    // in-flow so the page content rides along while the width springs
+    // between the icon rail and the full panel (beui collapsible="icon")
+    <motion.aside
+      aria-label="Main navigation"
+      data-state={collapsed ? "collapsed" : "expanded"}
+      initial={false}
+      animate={{ width: collapsed ? RAIL_WIDTH : PANEL_WIDTH }}
+      transition={reduce ? REDUCED_TRANSITION : SIDEBAR_MORPH_TRANSITION}
+      className="relative z-50 hidden shrink-0 lg:block"
+    >
+      <div className="sticky top-0 flex h-dvh w-full flex-col overflow-hidden border-r border-[#322F37] bg-[#121014]">
+        <SidebarContent collapsed={collapsed} onToggleCollapse={() => setCollapsed((value) => !value)} />
+      </div>
+    </motion.aside>
+  );
+}
+
+/**
+ * Mobile sheet over the beui animated-sidebar pattern: stays mounted for as
+ * long as the viewport is mobile and hides itself once the close slide has
+ * settled, so opening shows it in the same commit that starts the slide.
+ * Esc closes, Tab is trapped inside, the body scroll is locked, and focus
+ * returns to the opener on close.
+ */
+function MobileSheet({ open, onClose }: SidebarProps) {
+  const reduce = useReducedMotion() ?? false;
+  const panelRef = useRef<HTMLElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [hidden, setHidden] = useState(!open);
+  // The completion callback fires for the open slide too, and it reads state
+  // from whenever motion settles: a ref keeps it on the current one.
+  const openRef = useRef(open);
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    openRef.current = open;
+    if (open) setHidden(false);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const body = document.body;
+    const scrollY = window.scrollY;
+    const previousBodyStyles = {
+      left: body.style.left,
+      overflow: body.style.overflow,
+      position: body.style.position,
+      right: body.style.right,
+      top: body.style.top,
+    };
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.overflow = "hidden";
+
+    const focusFrame = requestAnimationFrame(() => {
+      const firstFocusable = panelRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      (firstFocusable ?? panelRef.current)?.focus({ preventScroll: true });
+    });
+
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      body.style.position = previousBodyStyles.position;
+      body.style.top = previousBodyStyles.top;
+      body.style.left = previousBodyStyles.left;
+      body.style.right = previousBodyStyles.right;
+      body.style.overflow = previousBodyStyles.overflow;
+      window.scrollTo(0, scrollY);
+      opener?.focus({ preventScroll: true });
+    };
+  }, [open]);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      className={cn(
+        "pointer-events-none fixed left-0 top-0 z-50 size-0 lg:hidden",
+        hidden && !open ? "invisible" : "visible",
+      )}
+    >
+      <motion.button
+        type="button"
+        aria-label="Close sidebar overlay"
+        tabIndex={open ? 0 : -1}
+        initial={false}
+        animate={{ opacity: open ? 1 : 0 }}
+        transition={reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
+        onClick={onClose}
+        className={cn("fixed inset-0 bg-black/50", open ? "pointer-events-auto" : "pointer-events-none")}
+      />
+      <motion.aside
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Main navigation"
+        aria-hidden={!open}
+        inert={!open}
+        tabIndex={-1}
+        data-state={open ? "expanded" : "collapsed"}
+        initial={false}
+        animate={{
+          opacity: reduce ? (open ? 1 : 0) : 1,
+          x: reduce ? 0 : open ? "0%" : "-120%",
+        }}
+        transition={reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
+        onAnimationComplete={() => {
+          if (!openRef.current) setHidden(true);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            onClose();
+            return;
+          }
+
+          if (event.key !== "Tab") return;
+          const focusable = panelRef.current
+            ? Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+            : [];
+
+          if (focusable.length === 0) {
+            event.preventDefault();
+            panelRef.current?.focus();
+            return;
+          }
+
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }}
+        className={cn(
+          "pointer-events-auto fixed bottom-1 left-[7vw] top-1 flex w-[88vw] max-w-[360px] flex-col overflow-hidden rounded-[7px] border border-[#302E34] bg-[#232127] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.025)]",
+          !open && "pointer-events-none",
+        )}
+      >
+        <SidebarContent onMobileClose={onClose} />
+      </motion.aside>
+    </div>,
+    document.body,
+  );
+}
+
+/** A reference-accurate, responsive navigation drawer. */
+export function Sidebar({ open, onClose }: SidebarProps) {
+  const isMobile = useMediaQuery("(max-width: 1023px)");
+  return isMobile ? <MobileSheet open={open} onClose={onClose} /> : <DesktopSidebar />;
 }
