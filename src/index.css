@@ -6,6 +6,19 @@ button, [role="button"] { cursor: pointer; }
 
 :root {
   --text-color-cui-secondary: #aaa6ae;
+  --skeleton-background: #29272d;
+  --skeleton-gradient-start: #c77dff;
+  --skeleton-gradient-end: #9b5de5;
+  --projects-bg: #1a181d;
+  --projects-surface: #171918;
+  --projects-card-bg: #121014;
+  --projects-control: #202321;
+  --projects-border: #2b2f2c;
+  --projects-border-hover: #3a3e3b;
+  --projects-divider: #2d302e;
+  --projects-ring: #4b504c;
+  --projects-text: #f2f4f3;
+  --projects-muted: #9ba19d;
   font-family: "Geist Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   color: #eeeaf0;
   background: #1a181d;
@@ -18,3 +31,110 @@ html, body, #root { min-height: 100%; margin: 0; }
 .sidebar-scrollbar { scrollbar-width: thin; scrollbar-color: #3a373f transparent; }
 .sidebar-scrollbar::-webkit-scrollbar { width: 5px; }
 .sidebar-scrollbar::-webkit-scrollbar-thumb { background: #3a373f; border-radius: 99px; }
+
+.search-palette-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #737078 transparent;
+  scrollbar-gutter: stable;
+}
+
+.search-palette-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-palette-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-palette-scrollbar::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background: #737078;
+  background-clip: padding-box;
+}
+
+.search-palette-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+/* beUI theme-toggle: circle-blur view-transition reveal. */
+html[data-beui-vt="circle-blur"]::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-beui-vt="circle-blur"]::view-transition-new(root) {
+  animation: beui-circle-blur-reveal 700ms cubic-bezier(0.4, 0, 0.2, 1);
+  mix-blend-mode: normal;
+}
+
+@keyframes beui-circle-blur-reveal {
+  from {
+    clip-path: circle(0% at var(--beui-vt-origin, 50% 100%));
+    filter: blur(8px);
+  }
+  to {
+    clip-path: circle(150% at var(--beui-vt-origin, 50% 100%));
+    filter: blur(0);
+  }
+}
+
+/* Light mode keeps the same layout while swapping the hard-coded dark palette. */
+html[data-theme="light"] {
+  --text-color-cui-secondary: #68636d;
+  --skeleton-background: #e7e7eb;
+  --skeleton-gradient-start: #a855d4;
+  --skeleton-gradient-end: #7e3fb2;
+  --projects-bg: #f7f8f7;
+  --projects-surface: #ffffff;
+  --projects-card-bg: #ffffff;
+  --projects-control: #ecefed;
+  --projects-border: #d9ddda;
+  --projects-border-hover: #c5cac7;
+  --projects-divider: #dfe3e0;
+  --projects-ring: #aeb5b0;
+  --projects-text: #151816;
+  --projects-muted: #68706b;
+  color-scheme: light;
+  background: #ffffff;
+  color: #1a181d;
+}
+
+html[data-theme="light"] body {
+  background: #ffffff;
+}
+
+html[data-theme="light"] [class~="bg-[#1A181D]"],
+html[data-theme="light"] [class~="bg-[#1a181d]"] {
+  background-color: #ffffff;
+}
+
+html[data-theme="light"] [class~="bg-[#121014]"],
+html[data-theme="light"] [class~="bg-[#201E22]"],
+html[data-theme="light"] [class~="bg-[#232127]"] {
+  background-color: #f7f7f8;
+}
+
+html[data-theme="light"] [class~="border-[#322F37]"],
+html[data-theme="light"] [class~="border-[#302E34]"],
+html[data-theme="light"] [class~="border-[#2d2d35]"],
+html[data-theme="light"] [class~="border-[#3a373f]"] {
+  border-color: #dedde2;
+}
+
+html[data-theme="light"] [class~="text-[#edecf1]"],
+html[data-theme="light"] [class~="text-[#EEEAF0]"],
+html[data-theme="light"] [class~="text-[#C5C1C9]"] {
+  color: #1a181d;
+}
+
+html[data-theme="light"] [class~="text-[#aaa6ae]"],
+html[data-theme="light"] [class~="text-[#AAA6AE]"],
+html[data-theme="light"] [class~="text-[#b3b0ba]"],
+html[data-theme="light"] [class~="text-[#737078]"],
+html[data-theme="light"] [class~="text-[#8a8791]"] {
+  color: #68636d;
+}

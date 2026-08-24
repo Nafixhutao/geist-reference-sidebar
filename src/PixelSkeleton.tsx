@@ -2,12 +2,18 @@
 
 import { useEffect, useRef } from "react";
 
+const DEFAULT_GRADIENT = [
+  "var(--skeleton-gradient-start)",
+  "var(--skeleton-gradient-end)",
+] as const;
+
 export type PixelSkeletonProps = {
   className?: string;
   circular?: boolean;
   squareSize?: number;
   gridGap?: number;
   color?: string;
+  gradient?: readonly [string, string] | null;
   maxOpacity?: number;
   sweepDuration?: number;
   sweepWidth?: number;
@@ -24,7 +30,8 @@ export function PixelSkeleton({
   squareSize = 4,
   gridGap = 2,
   color = "var(--text-color-cui-secondary)",
-  maxOpacity = 0.05,
+  gradient = DEFAULT_GRADIENT,
+  maxOpacity = 0.16,
   sweepDuration = 1.5,
   sweepWidth = 0.4,
   sweepNoise = 0.1,
@@ -42,12 +49,22 @@ export function PixelSkeleton({
     const cellSize = squareSize + gridGap;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
 
-    // Canvas fillStyle cannot resolve CSS variables — read it from computed style.
-    let fill = color;
-    if (fill.startsWith("var(")) {
-      const name = fill.slice(4, -1).trim();
-      fill = getComputedStyle(wrapper).getPropertyValue(name).trim() || "#eeeaf0";
-    }
+    // Canvas fillStyle cannot resolve CSS variables — resolve the pixel paint
+    // from computed styles whenever the theme changes.
+    const resolveValue = (value: string, fallback: string) => {
+      if (!value.startsWith("var(")) return value;
+      const name = value.slice(4, -1).trim();
+      return getComputedStyle(wrapper).getPropertyValue(name).trim() || fallback;
+    };
+    const resolveFill = (): string | CanvasGradient => {
+      if (!gradient) return resolveValue(color, "#eeeaf0");
+
+      const paint = ctx.createLinearGradient(0, 0, canvas.width, 0);
+      paint.addColorStop(0, resolveValue(gradient[0], "#c77dff"));
+      paint.addColorStop(1, resolveValue(gradient[1], "#63e6be"));
+      return paint;
+    };
+    let fill = resolveFill();
 
     let columns = 1;
     let rows = 1;
@@ -59,6 +76,7 @@ export function PixelSkeleton({
       const { width, height } = wrapper.getBoundingClientRect();
       canvas.width = Math.max(1, Math.round(width * dpr));
       canvas.height = Math.max(1, Math.round(height * dpr));
+      fill = resolveFill();
       columns = Math.max(1, Math.ceil(width / cellSize));
       rows = Math.max(1, Math.ceil(height / cellSize));
       noise = new Float32Array(columns * rows);
@@ -111,6 +129,14 @@ export function PixelSkeleton({
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(wrapper);
 
+    const themeObserver = new MutationObserver(() => {
+      fill = resolveFill();
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
     const intersectionObserver = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) start();
       else stop();
@@ -121,15 +147,17 @@ export function PixelSkeleton({
     return () => {
       stop();
       resizeObserver.disconnect();
+      themeObserver.disconnect();
       intersectionObserver.disconnect();
     };
-  }, [squareSize, gridGap, color, maxOpacity, sweepDuration, sweepWidth, sweepNoise]);
+  }, [squareSize, gridGap, color, gradient, maxOpacity, sweepDuration, sweepWidth, sweepNoise]);
 
   return (
     <div
       ref={wrapperRef}
       aria-hidden="true"
-      className={`relative overflow-hidden bg-[#29272d] ${circular ? "rounded-full" : "rounded-[2px]"} ${className}`}
+      style={{ backgroundColor: "var(--skeleton-background)" }}
+      className={`relative overflow-hidden ${circular ? "rounded-full" : "rounded-[2px]"} ${className}`}
     >
       <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" />
     </div>

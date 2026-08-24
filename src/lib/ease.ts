@@ -13,12 +13,14 @@ export const SPRING_PRESS = { type: "spring", stiffness: 500, damping: 30, mass:
 export const SPRING_LAYOUT = { type: "spring", stiffness: 360, damping: 32, mass: 0.6 } as const;
 
 export const PANEL_TRANSITION = { duration: 0.36, ease: EASE_DRAWER } as const;
+export const PANEL_CLOSE_TRANSITION = { duration: 0.28, ease: EASE_OUT } as const;
 export const REDUCED_TRANSITION = { duration: 0.16, ease: EASE_OUT } as const;
 export const SUBMENU_TRANSITION = { duration: 0.22, ease: EASE_OUT } as const;
 
-// The desktop rail settles at a hard width boundary. Keep the spring
-// critically damped so it cannot overshoot and bounce against it (beui).
-export const SIDEBAR_MORPH_TRANSITION = { type: "spring", stiffness: 380, damping: 35, mass: 0.75 } as const;
+// The desktop rail has a hard width boundary. Direction-aware tweens avoid
+// the spring's last-frame wobble while keeping expansion a little more open.
+export const SIDEBAR_COLLAPSE_TRANSITION = { duration: 0.24, ease: EASE_OUT } as const;
+export const SIDEBAR_EXPAND_TRANSITION = { duration: 0.3, ease: EASE_DRAWER } as const;
 
 // Row labels crossfade while the rail collapses/expands (beui): they leave
 // fast so they are gone before the width clips them, and come back slightly
