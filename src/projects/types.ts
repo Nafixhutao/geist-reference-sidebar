@@ -5,6 +5,7 @@ export type Project = {
   name: string;
   provider: string;
   region: string;
+  plan: string;
   status: ProjectStatus;
 };
 

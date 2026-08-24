@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RequestsOverview } from "./RequestsOverview";
 import { ProjectCard } from "./projects/ProjectCard";
 import { projects } from "./projects/data";
 import { ProjectToolbar } from "./projects/ProjectToolbar";
@@ -35,7 +34,7 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
   }, [query, sort, status]);
 
   return (
-    <section className="min-h-dvh bg-[var(--projects-bg)] px-5 pb-12 pt-10 sm:px-8 lg:px-10 lg:pt-[46px]">
+    <section className="projects-page min-h-dvh bg-[var(--projects-bg)] px-2 pb-12 pt-14">
       <div className="mx-auto w-full max-w-[1170px]">
         <div className="flex items-center justify-between gap-4">
           <h1 className="m-0 text-[22px] font-medium leading-7 tracking-[-0.025em] text-[var(--projects-text)]">
@@ -53,7 +52,7 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
           )}
         </div>
 
-        <div className="mt-10 grid gap-6 min-[1400px]:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="projects-layout mt-[47px] grid gap-6">
           <div className="min-w-0">
             <ProjectToolbar
               query={query}
@@ -90,7 +89,6 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
           <UsagePanel />
         </div>
 
-        <RequestsOverview />
       </div>
     </section>
   );

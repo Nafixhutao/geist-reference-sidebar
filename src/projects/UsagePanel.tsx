@@ -4,7 +4,7 @@ export function UsagePanel() {
   return (
     <aside
       aria-labelledby="usage-panel-title"
-      className="w-full rounded-md border border-[var(--projects-border)] bg-[var(--projects-card-bg)] p-4 min-[1400px]:w-[320px]"
+      className="projects-usage-panel h-[210px] w-full rounded-md border border-[var(--projects-border)] bg-[var(--projects-card-bg)] p-[15px]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -15,15 +15,15 @@ export function UsagePanel() {
         </div>
         <button
           type="button"
-          className="h-7 shrink-0 rounded-md border border-[var(--projects-accent-border)] bg-[var(--projects-accent-strong)] px-3 text-xs font-medium leading-4 text-white transition-colors hover:bg-[var(--projects-accent-hover)]"
+          className="h-[27px] shrink-0 rounded-md border border-[var(--projects-accent-border)] bg-[var(--projects-accent-strong)] px-[11px] text-xs font-medium leading-4 text-white transition-colors hover:bg-[var(--projects-accent-hover)]"
         >
           Upgrade to Pro
         </button>
       </div>
 
-      <div className="mt-4 divide-y divide-dashed divide-[var(--projects-divider)]">
+      <div className="mt-[17px] divide-y divide-dashed divide-[var(--projects-divider)]">
         {usageRows.map((row) => (
-          <div key={row.label} className="flex min-h-[34px] items-center">
+          <div key={row.label} className="flex h-[34px] items-center">
             <span
               className="mr-2.5 size-3.5 shrink-0 rounded-full border-2 border-[var(--projects-ring)]"
               aria-hidden="true"
