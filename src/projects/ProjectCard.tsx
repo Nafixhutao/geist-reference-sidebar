@@ -13,8 +13,8 @@ export function ProjectCard({ project, view }: { project: Project; view: Project
       className={cn(
         "group relative flex border border-[var(--projects-border)] bg-[var(--projects-card-bg)] transition-colors hover:border-[var(--projects-border-hover)]",
         isList
-          ? "min-h-[92px] w-full items-center justify-between rounded-md px-5 py-4"
-          : "min-h-[176px] w-full flex-col rounded-md px-5 pb-5 pt-6 sm:max-w-[264px]",
+          ? "h-[92px] w-full items-center justify-between rounded-md px-5 py-4"
+          : "h-[176px] w-[264px] max-w-full shrink-0 flex-col rounded-md px-5 pb-5 pt-6",
       )}
     >
       <Link

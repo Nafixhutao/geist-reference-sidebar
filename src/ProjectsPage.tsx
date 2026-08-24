@@ -70,7 +70,7 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
               className={cn(
                 "mt-4",
                 view === "grid"
-                  ? "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"
+                  ? "flex flex-wrap gap-3"
                   : "flex w-full flex-col gap-3",
               )}
             >
