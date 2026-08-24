@@ -34,7 +34,7 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
   }, [query, sort, status]);
 
   return (
-    <section className="projects-page min-h-dvh bg-[var(--projects-bg)] px-2 pb-12 pt-14">
+    <section className="projects-page min-h-dvh bg-[var(--projects-bg)] px-4 pb-12 pt-14">
       <div className="mx-auto w-full max-w-[1170px]">
         <div className="flex items-center justify-between gap-4">
           <h1 className="m-0 text-[22px] font-medium leading-7 tracking-[-0.025em] text-[var(--projects-text)]">

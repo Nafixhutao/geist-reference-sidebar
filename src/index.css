@@ -36,7 +36,7 @@ html, body, #root { min-height: 100%; margin: 0; }
 
 .projects-page { container-type: inline-size; }
 
-@container (min-width: 1060px) {
+@container (min-width: 1020px) {
   .projects-layout {
     grid-template-columns: minmax(0, 1fr) 320px;
   }
