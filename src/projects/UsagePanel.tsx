@@ -4,7 +4,7 @@ export function UsagePanel() {
   return (
     <aside
       aria-labelledby="usage-panel-title"
-      className="w-full rounded-md border border-[var(--projects-border)] bg-[var(--projects-surface)] p-4 min-[1400px]:w-[320px]"
+      className="w-full rounded-md border border-[var(--projects-border)] bg-[var(--projects-card-bg)] p-4 min-[1400px]:w-[320px]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
