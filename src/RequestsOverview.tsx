@@ -127,13 +127,13 @@ function MetricCard({ card, last }: { card: ServiceCard; last: boolean }) {
         <div className="flex min-w-[148px] justify-between gap-4">
           <div className="text-right">
             <p className="m-0 flex items-center justify-end gap-[7px] font-mono text-[10px] font-semibold leading-[14px] tracking-[0.04em] text-[var(--projects-muted)]">
-              <span className="size-[6px] rounded-full bg-[#f5b942]" /> WARNINGS
+              <span className="size-[6px] rounded-full bg-[var(--projects-warning)]" /> WARNINGS
             </p>
             <p className="m-0 mt-[1px] text-[16px] font-medium leading-[20px] text-[var(--projects-text)]">{card.warnings}</p>
           </div>
           <div className="text-right">
             <p className="m-0 flex items-center justify-end gap-[7px] font-mono text-[10px] font-semibold leading-[14px] tracking-[0.04em] text-[var(--projects-muted)]">
-              <span className="size-[6px] rounded-full bg-[#ff7a82]" /> ERRORS
+              <span className="size-[6px] rounded-full bg-[var(--projects-danger)]" /> ERRORS
             </p>
             <p className="m-0 mt-[1px] text-[16px] font-medium leading-[20px] text-[var(--projects-text)]">{card.errors}</p>
           </div>
@@ -158,7 +158,7 @@ function MetricCard({ card, last }: { card: ServiceCard; last: boolean }) {
 export function RequestsOverview() {
   return (
     <section className="mt-14">
-      <div className="flex min-h-[35px] items-start gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
         <GripVertical size={15} strokeWidth={1.8} className="mt-[4px] shrink-0 text-[var(--projects-muted)]" aria-hidden="true" />
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
           <p className="m-0 text-[20px] font-semibold leading-[26px] text-[var(--projects-text)]">
@@ -170,7 +170,7 @@ export function RequestsOverview() {
         </div>
         <button
           type="button"
-          className="ml-auto inline-flex h-[27px] shrink-0 items-center gap-2 rounded-[6px] border border-[var(--projects-border-hover)] px-[11px] text-[12px] font-medium text-[var(--projects-text)] transition-colors hover:bg-white/[0.035]"
+          className="inline-flex h-[27px] shrink-0 items-center gap-2 self-start rounded-[6px] border border-[var(--projects-border-hover)] px-[11px] text-[12px] font-medium text-[var(--projects-text)] transition-colors hover:bg-white/[0.035] sm:ml-auto"
         >
           Last 60 minutes
           <ChevronDown size={12} strokeWidth={1.8} className="text-[var(--projects-muted)]" />

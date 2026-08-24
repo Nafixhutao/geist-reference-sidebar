@@ -19,6 +19,12 @@ button, [role="button"] { cursor: pointer; }
   --projects-ring: #4b504c;
   --projects-text: #f2f4f3;
   --projects-muted: #9ba19d;
+  --projects-accent: #3ecf8e;
+  --projects-accent-strong: #006d46;
+  --projects-accent-border: #078153;
+  --projects-accent-hover: #087b52;
+  --projects-warning: #f5b942;
+  --projects-danger: #ff7a82;
   font-family: "Geist Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   color: #eeeaf0;
   background: #1a181d;
@@ -98,6 +104,12 @@ html[data-theme="light"] {
   --projects-ring: #aeb5b0;
   --projects-text: #151816;
   --projects-muted: #68706b;
+  --projects-accent: #16875b;
+  --projects-accent-strong: #08784e;
+  --projects-accent-border: #16875b;
+  --projects-accent-hover: #066b45;
+  --projects-warning: #a86e00;
+  --projects-danger: #bd3f49;
   color-scheme: light;
   background: #ffffff;
   color: #1a181d;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { PixelSkeleton } from "../PixelSkeleton";
 import {
@@ -22,6 +23,7 @@ import {
   CircleDollarSign,
   Database,
   FileText,
+  FolderKanban,
   Headphones,
   House,
   LayoutDashboard,
@@ -90,6 +92,7 @@ type SearchResult = {
 
 const SEARCH_RESULTS: SearchResult[] = [
   { section: "Navigation", label: "Go to Repositories", Icon: Database },
+  { section: "Navigation", label: "Go to Projects", Icon: FolderKanban },
   { section: "Navigation", label: "Go to Dashboard", Icon: LayoutDashboard },
   { section: "Settings", label: "Go to Organization Settings", Icon: Building2 },
   { section: "Settings", label: "Go to Billing", Icon: CircleDollarSign },
@@ -111,6 +114,7 @@ const primaryNavItems: NavItem[] = [
     labelClassName: "text-[14px] leading-[20px] text-[oklch(0.949_0.0035_305)]",
   },
   { icon: NavIcon(House), label: "Explore" },
+  { icon: NavIcon(FolderKanban), label: "Projects" },
   { icon: NavIcon(PieChart), label: "Analytics", expandable: true },
 ];
 
@@ -561,8 +565,10 @@ export function SidebarContent({
   showHeader?: boolean;
   onToggleCollapse?: () => void;
 }) {
+  const pathname = usePathname();
+  const router = useRouter();
   const [reviewOpen, setReviewOpen] = useState(true);
-  const [active, setActive] = useState<string | null>(null);
+  const [active, setActive] = useState<string | null>(() => (pathname === "/" ? "Projects" : null));
   const [searchOpen, setSearchOpen] = useState(false);
   const pillId = useId();
   const reduce = useReducedMotion() ?? false;
@@ -590,6 +596,11 @@ export function SidebarContent({
     if (collapsed) onToggleCollapse?.();
   };
 
+  const selectNavigation = (label: string) => {
+    select(label);
+    if (label === "Projects" && pathname !== "/") router.push("/");
+  };
+
   const renderNavItem = (item: NavItem) => (
     <NavRow
       key={item.label}
@@ -598,7 +609,7 @@ export function SidebarContent({
       layoutId={pillId}
       onSelect={() => {
         if (item.label === "Search") setSearchOpen(true);
-        else select(item.label);
+        else selectNavigation(item.label);
       }}
       collapsed={collapsed}
     />
@@ -661,7 +672,7 @@ export function SidebarContent({
         onClose={() => setSearchOpen(false)}
         onSelect={(result) => {
           setSearchOpen(false);
-          if (result.label.startsWith("Go to ")) select(result.label.slice(6));
+          if (result.label.startsWith("Go to ")) selectNavigation(result.label.slice(6));
         }}
       />
     </>
