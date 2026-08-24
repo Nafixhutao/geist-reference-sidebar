@@ -7,6 +7,7 @@ import {
   SIDEBAR_COLLAPSE_TRANSITION,
   SIDEBAR_EXPAND_TRANSITION,
 } from "@/lib/ease";
+import { cn } from "@/lib/utils";
 import { SidebarContent } from "./navigation";
 
 /** Desktop rail width when collapsed to icons only — measured from the
@@ -15,7 +16,7 @@ const RAIL_WIDTH = 52;
 /** Expanded desktop sidebar width. */
 const PANEL_WIDTH = 268;
 
-export function DesktopSidebar() {
+export function DesktopSidebar({ hasTopBar = false }: { hasTopBar?: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
   const reduce = useReducedMotion() ?? false;
 
@@ -42,7 +43,12 @@ export function DesktopSidebar() {
       }
       className="relative z-50 hidden shrink-0 lg:block"
     >
-      <div className="sticky top-12 flex h-[calc(100dvh-48px)] w-full flex-col overflow-hidden border-r border-[#322F37] bg-[#121014]">
+      <div
+        className={cn(
+          "sticky flex w-full flex-col overflow-hidden border-r border-[#322F37] bg-[#121014]",
+          hasTopBar ? "top-12 h-[calc(100dvh-48px)]" : "top-0 h-dvh",
+        )}
+      >
         <SidebarContent collapsed={collapsed} onToggleCollapse={() => setCollapsed((value) => !value)} />
       </div>
     </motion.aside>

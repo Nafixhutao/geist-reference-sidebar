@@ -48,28 +48,40 @@ function RoundAction({ label, children }: { label: string; children: ReactNode }
   );
 }
 
-export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
+export function TopBar({
+  onMenuClick,
+  showSidebarToggle = true,
+}: {
+  onMenuClick?: () => void;
+  showSidebarToggle?: boolean;
+}) {
   const toggleSidebar = () => {
-    onMenuClick();
+    onMenuClick?.();
     window.dispatchEvent(new Event("toggle-desktop-sidebar"));
   };
 
   const openSearch = () => {
-    onMenuClick();
+    onMenuClick?.();
     window.dispatchEvent(new Event("open-command-palette"));
   };
 
   return (
     <header className="sticky top-0 z-[90] flex h-12 w-full items-center border-b border-[#322f37] bg-[#121014] px-3 text-[#edecf1]">
       <div className="flex min-w-0 items-center overflow-hidden">
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          aria-label="Toggle sidebar"
-          className="inline-flex size-6 shrink-0 items-center justify-center rounded transition-colors hover:bg-white/[0.05]"
-        >
-          <SupabaseMark />
-        </button>
+        {showSidebarToggle ? (
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+            className="inline-flex size-6 shrink-0 items-center justify-center rounded transition-colors hover:bg-white/[0.05]"
+          >
+            <SupabaseMark />
+          </button>
+        ) : (
+          <span className="inline-flex size-6 shrink-0 items-center justify-center" aria-hidden="true">
+            <SupabaseMark />
+          </span>
+        )}
 
         <Slash />
 

@@ -4,6 +4,8 @@ export interface SidebarProps {
   /** Controls the slide-in mobile drawer. Desktop is always visible. */
   open: boolean;
   onClose: () => void;
+  /** Keeps the sidebar below the 48px application top bar when present. */
+  hasTopBar?: boolean;
 }
 
 export type BadgeKind = "Beta" | "New";

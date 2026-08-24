@@ -22,9 +22,13 @@ function useMediaQuery(query: string) {
 }
 
 /** A reference-accurate, responsive navigation drawer. */
-export function Sidebar({ open, onClose }: SidebarProps) {
+export function Sidebar({ open, onClose, hasTopBar = false }: SidebarProps) {
   const isMobile = useMediaQuery("(max-width: 1023px)");
-  return isMobile ? <MobileSheet open={open} onClose={onClose} /> : <DesktopSidebar />;
+  return isMobile ? (
+    <MobileSheet open={open} onClose={onClose} hasTopBar={hasTopBar} />
+  ) : (
+    <DesktopSidebar hasTopBar={hasTopBar} />
+  );
 }
 
 export type { SidebarProps } from "./sidebar/types";

@@ -8,10 +8,12 @@ import {
   Info,
   LayoutGrid,
   List,
+  Menu,
   MoreVertical,
   Plus,
   Search,
 } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { RequestsOverview } from "./RequestsOverview";
 
@@ -64,13 +66,21 @@ function ProjectCard({ listView }: { listView: boolean }) {
   return (
     <article
       className={cn(
-        "relative flex border border-[var(--projects-border)] bg-[var(--projects-card-bg)] transition-colors hover:border-[var(--projects-border-hover)]",
+        "group relative flex border border-[var(--projects-border)] bg-[var(--projects-card-bg)] transition-colors hover:border-[var(--projects-border-hover)]",
         listView
           ? "h-[92px] w-full items-center justify-between rounded-[6px] px-5"
           : "h-[176px] w-[264px] flex-col rounded-[6px] px-5 pb-5 pt-[25px]",
       )}
     >
-      <div className="min-w-0">
+      <Link
+        href="/projects/app_ig"
+        aria-label="Open project app_ig"
+        className="absolute inset-0 z-0 rounded-[6px] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--projects-bg)]"
+      >
+        <span className="sr-only">Open project app_ig</span>
+      </Link>
+
+      <div className="relative z-10 min-w-0 pointer-events-none">
         <h2 className="m-0 truncate text-[14px] font-semibold leading-[20px] text-[var(--projects-text)]">app_ig</h2>
         <p className="m-0 mt-[1px] truncate text-[13px] font-normal leading-[18px] text-[var(--projects-muted)]">AWS | ap-southeast-1</p>
       </div>
@@ -80,13 +90,14 @@ function ProjectCard({ listView }: { listView: boolean }) {
         aria-label="Project actions"
         className={cn(
           "absolute inline-flex size-6 items-center justify-center rounded text-[var(--projects-muted)] transition-colors hover:bg-white/[0.05] hover:text-[var(--projects-text)]",
+          "z-20",
           listView ? "right-3 top-2" : "right-[19px] top-[20px]",
         )}
       >
         <MoreVertical size={15} strokeWidth={2} />
       </button>
 
-      <div className={cn("flex items-center", listView ? "mr-9" : "mt-auto")}>
+      <div className={cn("relative z-10 flex items-center pointer-events-none", listView ? "mr-9" : "mt-auto")}>
         <span className="mr-2 inline-flex size-6 items-center justify-center rounded-[6px] border border-[var(--projects-border-hover)] text-[var(--projects-muted)]">
           <CirclePause size={13} strokeWidth={1.8} aria-hidden="true" />
         </span>
@@ -97,15 +108,27 @@ function ProjectCard({ listView }: { listView: boolean }) {
   );
 }
 
-export function ProjectsPage() {
+export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const projectVisible = "app_ig".includes(query.trim().toLowerCase());
 
   return (
-    <section className="min-h-[calc(100dvh-48px)] bg-[var(--projects-bg)] px-5 pb-12 pt-10 sm:px-8 lg:px-10 lg:pt-[46px]">
+    <section className="min-h-dvh bg-[var(--projects-bg)] px-5 pb-12 pt-10 sm:px-8 lg:px-10 lg:pt-[46px]">
       <div className="mx-auto w-full max-w-[1170px]">
-        <h1 className="m-0 text-[22px] font-medium leading-[28px] tracking-[-0.025em] text-[var(--projects-text)]">Projects</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="m-0 text-[22px] font-medium leading-[28px] tracking-[-0.025em] text-[var(--projects-text)]">Projects</h1>
+          {onOpenSidebar && (
+            <button
+              type="button"
+              onClick={onOpenSidebar}
+              className="inline-flex h-8 items-center gap-2 rounded-[6px] border border-[var(--projects-border)] px-3 text-[12px] font-medium text-[var(--projects-text)] transition-colors hover:bg-white/[0.04] lg:hidden"
+            >
+              <Menu size={14} strokeWidth={1.8} aria-hidden="true" />
+              Menu
+            </button>
+          )}
+        </div>
 
         <div className="mt-[47px] grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0">

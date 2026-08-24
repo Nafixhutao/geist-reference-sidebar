@@ -214,7 +214,7 @@ function Header({
           initial={false}
           animate={{ opacity: collapsed ? 0 : 1 }}
           transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
-          className="shrink-0 object-cover size-5 rounded-md"
+          className="size-5 shrink-0 rounded-md object-cover"
           src="https://avatars.githubusercontent.com/u/135522402?s=80&v=4"
         />
         <RailLabel collapsed={collapsed} className="flex items-center">

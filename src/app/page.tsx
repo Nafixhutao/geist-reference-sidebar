@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Sidebar } from "../Sidebar";
 import { ProjectsPage } from "../ProjectsPage";
-import { TopBar } from "../TopBar";
 
 export default function Page() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -14,11 +13,10 @@ export default function Page() {
 
   return (
     <div className="min-h-dvh bg-[#1A181D]">
-      <TopBar onMenuClick={() => setSidebarOpen(true)} />
-      <div className="min-h-[calc(100dvh-48px)] lg:flex">
+      <div className="min-h-dvh lg:flex">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="relative min-h-[calc(100dvh-48px)] min-w-0 flex-1">
-          <ProjectsPage />
+        <main className="relative min-h-dvh min-w-0 flex-1">
+          <ProjectsPage onOpenSidebar={() => setSidebarOpen(true)} />
         </main>
       </div>
     </div>

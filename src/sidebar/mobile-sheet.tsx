@@ -24,7 +24,7 @@ const FOCUSABLE_SELECTOR = [
  * Esc closes, Tab is trapped inside, the body scroll is locked, and focus
  * returns to the opener on close.
  */
-export function MobileSheet({ open, onClose }: SidebarProps) {
+export function MobileSheet({ open, onClose, hasTopBar = false }: SidebarProps) {
   const reduce = useReducedMotion() ?? false;
   const panelRef = useRef<HTMLElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -94,7 +94,11 @@ export function MobileSheet({ open, onClose }: SidebarProps) {
         animate={{ opacity: open ? 1 : 0 }}
         transition={reduce ? REDUCED_TRANSITION : open ? PANEL_TRANSITION : PANEL_CLOSE_TRANSITION}
         onClick={onClose}
-        className={cn("fixed inset-x-0 bottom-0 top-12 bg-black/50", open ? "pointer-events-auto" : "pointer-events-none")}
+        className={cn(
+          "fixed inset-x-0 bottom-0 bg-black/50",
+          hasTopBar ? "top-12" : "top-0",
+          open ? "pointer-events-auto" : "pointer-events-none",
+        )}
       />
       <motion.aside
         ref={panelRef}
@@ -143,7 +147,8 @@ export function MobileSheet({ open, onClose }: SidebarProps) {
           }
         }}
         className={cn(
-          "pointer-events-auto fixed bottom-1 left-[7vw] top-[52px] flex w-[88vw] max-w-[360px] flex-col overflow-hidden rounded-[7px] border border-[#302E34] bg-[#232127] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.025)]",
+          "pointer-events-auto fixed bottom-1 left-[7vw] flex w-[88vw] max-w-[360px] flex-col overflow-hidden rounded-[7px] border border-[#302E34] bg-[#232127] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.025)]",
+          hasTopBar ? "top-[52px]" : "top-1",
           !open && "pointer-events-none",
         )}
       >
