@@ -12,8 +12,8 @@ export const projects: Project[] = [
 ];
 
 export const usageRows = [
-  { label: "EGRESS", value: "0 GB", limit: "5 GB" },
-  { label: "DATABASE SIZE", value: "27 MB", limit: "500 MB" },
-  { label: "MONTHLY ACTIVE USERS", value: "0", limit: "50,000" },
-  { label: "FILE STORAGE", value: "0 MB", limit: "1 GB" },
+  { label: "Egress", value: "0 GB", limit: "5 GB", percent: 0 },
+  { label: "Database size", value: "27 MB", limit: "500 MB", percent: 5.4 },
+  { label: "Monthly active users", value: "0", limit: "50,000", percent: 0 },
+  { label: "File storage", value: "0 MB", limit: "1 GB", percent: 0 },
 ] as const;
