@@ -3,7 +3,7 @@
 import { PixelSkeleton } from "./PixelSkeleton";
 
 /** Contoh penggunaan PixelSkeleton: dasar, kartu, dan layout. */
-export function SkeletonDemo() {
+export function SkeletonShowcase() {
   return (
     <div className="min-h-dvh space-y-10 p-6">
       <section className="space-y-3">

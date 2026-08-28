@@ -6,10 +6,31 @@ export const projects: Project[] = [
     name: "app_ig",
     provider: "AWS",
     region: "ap-southeast-1",
+    regionCountry: "singapore",
+    environment: "production",
     plan: "NANO",
     status: "paused",
+    createdAt: "2025-05-14T10:24:00Z",
   },
 ];
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+});
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: "UTC",
+});
+
+export function formatProjectDate(iso: string) {
+  const date = new Date(iso);
+  return `${dateFormatter.format(date)} ${timeFormatter.format(date)}`;
+}
 
 export const usageRows = [
   { label: "Egress", value: "0 GB", limit: "5 GB", percent: 0 },

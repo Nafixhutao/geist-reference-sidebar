@@ -51,9 +51,13 @@ function RoundAction({ label, children }: { label: string; children: ReactNode }
 export function TopBar({
   onMenuClick,
   showSidebarToggle = true,
+  projectName = "app_ig",
+  environment = "production",
 }: {
   onMenuClick?: () => void;
   showSidebarToggle?: boolean;
+  projectName?: string;
+  environment?: string;
 }) {
   const toggleSidebar = () => {
     onMenuClick?.();
@@ -96,7 +100,7 @@ export function TopBar({
 
         <div className="hidden items-center md:flex">
           <Box size={14} strokeWidth={1.7} className="mr-2 text-[#8a8791]" aria-hidden="true" />
-          <span className="text-[13px] font-semibold leading-[18px]">app_ig</span>
+          <span className="text-[13px] font-semibold leading-[18px]">{projectName}</span>
           <Stepper />
         </div>
 
@@ -104,7 +108,7 @@ export function TopBar({
 
         <div className="hidden items-center lg:flex">
           <span className="text-[13px] font-semibold leading-[18px]">main</span>
-          <span className="ml-2 rounded-[5px] border border-[#7a4c00] bg-[#2a1d00] px-[7px] py-[1px] text-[9px] font-medium leading-[13px] tracking-[0.08em] text-[#f59e0b]">PRODUCTION</span>
+          <span className="ml-2 rounded-[5px] border border-[#7a4c00] bg-[#2a1d00] px-[7px] py-[1px] text-[9px] font-medium leading-[13px] tracking-[0.08em] text-[#f59e0b]">{environment.toUpperCase()}</span>
           <Stepper />
         </div>
 

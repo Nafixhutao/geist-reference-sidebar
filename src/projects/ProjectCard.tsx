@@ -1,26 +1,30 @@
 import { Box, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { formatProjectDate } from "./data";
+import { ProjectStatusBadge } from "./ProjectStatusBadge";
+import { RegionLabel } from "./RegionFlag";
 import type { Project, ProjectView } from "./types";
 
-function StatusChip({ status }: { status: Project["status"] }) {
-  const isPaused = status === "paused";
+export const projectTableColumns =
+  "grid-cols-[minmax(200px,1.4fr)_minmax(80px,.6fr)_minmax(112px,1fr)_minmax(90px,.6fr)_minmax(72px,.4fr)_minmax(110px,.8fr)_40px]";
 
+export function ProjectTableHeader() {
   return (
-    <span
+    <div
       className={cn(
-        "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium",
-        isPaused
-          ? "bg-[color-mix(in_srgb,var(--projects-warning)_18%,transparent)] text-[var(--projects-warning)]"
-          : "bg-[color-mix(in_srgb,var(--projects-accent)_16%,transparent)] text-[var(--projects-accent)]",
+        "grid items-center bg-[var(--projects-control)] px-5 py-3 text-[12px] font-medium text-[var(--projects-muted)]",
+        projectTableColumns,
       )}
     >
-      <span
-        className={cn("size-1.5 rounded-full", isPaused ? "bg-[var(--projects-warning)]" : "bg-[var(--projects-accent)]")}
-        aria-hidden="true"
-      />
-      {isPaused ? "Paused" : "Active"}
-    </span>
+      <span>Project name</span>
+      <span>Cloud</span>
+      <span>Region</span>
+      <span>Status</span>
+      <span>Plan</span>
+      <span>Created</span>
+      <span aria-hidden="true" />
+    </div>
   );
 }
 
@@ -29,20 +33,26 @@ function ProjectIcon({ size = "default" }: { size?: "default" | "compact" }) {
     <span
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-md border border-[var(--projects-border-hover)] bg-[var(--projects-control)] text-[var(--projects-accent)]",
-        size === "compact" ? "size-9" : "size-11",
+        size === "compact" ? "size-10" : "size-11",
       )}
     >
-      <Box size={size === "compact" ? 17 : 21} strokeWidth={1.7} aria-hidden="true" />
+      <Box size={size === "compact" ? 18 : 21} strokeWidth={1.7} aria-hidden="true" />
     </span>
   );
 }
 
 export function ProjectCard({ project, view }: { project: Project; view: ProjectView }) {
   const isList = view === "list";
+  const description = project.description?.trim() || "No description";
 
   if (isList) {
     return (
-      <article className="group relative grid min-w-[760px] grid-cols-[minmax(250px,1.7fr)_minmax(110px,.75fr)_minmax(160px,1fr)_minmax(112px,.7fr)_minmax(92px,.55fr)_40px] items-center border-t border-[var(--projects-divider)] bg-[var(--projects-card-bg)] px-5 py-3.5 transition-colors hover:bg-[var(--projects-control)]">
+      <article
+        className={cn(
+          "group relative grid min-w-[900px] items-center border-t border-[var(--projects-divider)] bg-[var(--projects-card-bg)] px-5 py-3.5 transition-colors hover:bg-[var(--projects-control)]",
+          projectTableColumns,
+        )}
+      >
         <Link
           href={`/projects/${project.id}`}
           aria-label={`Open project ${project.name}`}
@@ -53,18 +63,30 @@ export function ProjectCard({ project, view }: { project: Project; view: Project
 
         <div className="pointer-events-none relative z-10 flex min-w-0 items-center gap-3">
           <ProjectIcon size="compact" />
-          <span className="min-w-0 truncate text-[14px] font-semibold leading-5 text-[var(--projects-text)]">{project.name}</span>
+          <span className="min-w-0">
+            <span className="block truncate text-[14px] font-semibold leading-5 text-[var(--projects-text)]">
+              {project.name}
+            </span>
+            <span className="mt-0.5 block truncate text-[12px] leading-4 text-[var(--projects-muted)]">
+              {description}
+            </span>
+          </span>
         </div>
         <span className="pointer-events-none relative z-10 truncate text-[13px] text-[var(--projects-text)]">{project.provider}</span>
-        <span className="pointer-events-none relative z-10 truncate text-[13px] text-[var(--projects-muted)]">{project.region}</span>
-        <span className="pointer-events-none relative z-10"><StatusChip status={project.status} /></span>
+        <span className="pointer-events-none relative z-10 flex min-w-0 items-center gap-2 truncate text-[13px] text-[var(--projects-muted)]">
+          <RegionLabel country={project.regionCountry} region={project.region} />
+        </span>
+        <span className="pointer-events-none relative z-10"><ProjectStatusBadge status={project.status} variant="chip" /></span>
         <span className="pointer-events-none relative z-10 inline-flex h-6 w-fit items-center rounded border border-[var(--projects-border-hover)] px-2 font-mono text-[10px] tracking-[0.02em] text-[var(--projects-muted)]">
           {project.plan}
+        </span>
+        <span className="pointer-events-none relative z-10 truncate text-[12.5px] text-[var(--projects-muted)]">
+          <time dateTime={project.createdAt}>{formatProjectDate(project.createdAt)}</time>
         </span>
         <button
           type="button"
           aria-label={`Project actions for ${project.name}`}
-          className="relative z-20 inline-flex size-9 items-center justify-center rounded-md text-[var(--projects-muted)] transition-colors hover:bg-white/[0.05] hover:text-[var(--projects-text)]"
+          className="relative z-20 inline-flex size-10 items-center justify-center rounded-md text-[var(--projects-muted)] transition-colors hover:bg-white/[0.05] hover:text-[var(--projects-text)]"
         >
           <MoreVertical size={16} strokeWidth={2} aria-hidden="true" />
         </button>
@@ -94,16 +116,20 @@ export function ProjectCard({ project, view }: { project: Project; view: Project
         <ProjectIcon />
         <div className="min-w-0">
           <h2 className="m-0 truncate text-[15px] font-semibold leading-5 text-[var(--projects-text)]">{project.name}</h2>
-          <p className="m-0 mt-1 truncate text-[13px] leading-[18px] text-[var(--projects-muted)]">
-            {project.provider} <span className="px-1">·</span> {project.region}
+          <p className="m-0 mt-1 flex min-w-0 items-center gap-2 truncate text-[13px] leading-[18px] text-[var(--projects-muted)]">
+            {project.provider} <span aria-hidden="true">·</span>
+            <RegionLabel country={project.regionCountry} region={project.region} />
           </p>
         </div>
       </div>
 
       <div className="pointer-events-none relative z-10 mt-auto flex items-center gap-2">
-        <StatusChip status={project.status} />
+        <ProjectStatusBadge status={project.status} variant="chip" />
         <span className="inline-flex h-7 items-center rounded border border-[var(--projects-border-hover)] px-2.5 font-mono text-[10px] tracking-[0.02em] text-[var(--projects-muted)]">
           {project.plan}
+        </span>
+        <span className="ml-auto truncate text-[11px] text-[var(--projects-muted)]">
+          Created {formatProjectDate(project.createdAt)}
         </span>
       </div>
     </article>

@@ -16,14 +16,27 @@ const RAIL_WIDTH = 52;
 /** Expanded desktop sidebar width. */
 const PANEL_WIDTH = 268;
 
+// Module-level so the rail choice survives SPA route changes, where every
+// page mounts its own DesktopSidebar instance and would reset to expanded.
+let collapsedAcrossPages = false;
+
 export function DesktopSidebar({ hasTopBar = false }: { hasTopBar?: boolean }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(collapsedAcrossPages);
   const reduce = useReducedMotion() ?? false;
 
+  const toggleCollapse = () => {
+    setCollapsed((value) => {
+      collapsedAcrossPages = !value;
+      return !value;
+    });
+  };
+
   useEffect(() => {
-    const toggle = () => setCollapsed((value) => !value);
-    window.addEventListener("toggle-desktop-sidebar", toggle);
-    return () => window.removeEventListener("toggle-desktop-sidebar", toggle);
+    window.addEventListener("toggle-desktop-sidebar", toggleCollapse);
+    return () => window.removeEventListener("toggle-desktop-sidebar", toggleCollapse);
+    // The updater reads the current state via the functional form, so the
+    // listener staying on the first render's closure is safe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -49,7 +62,7 @@ export function DesktopSidebar({ hasTopBar = false }: { hasTopBar?: boolean }) {
           hasTopBar ? "top-12 h-[calc(100dvh-48px)]" : "top-0 h-dvh",
         )}
       >
-        <SidebarContent collapsed={collapsed} onToggleCollapse={() => setCollapsed((value) => !value)} />
+        <SidebarContent collapsed={collapsed} onToggleCollapse={toggleCollapse} />
       </div>
     </motion.aside>
   );

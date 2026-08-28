@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sidebar } from "../sidebar/Sidebar";
-import { ProjectsPage } from "../projects/ProjectsPage";
+import { Sidebar } from "../../sidebar/Sidebar";
+import { AgentPage } from "../../agents/AgentPage";
 
 export default function Page() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -16,7 +16,7 @@ export default function Page() {
       <div className="min-h-dvh lg:flex">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main className="relative min-h-dvh min-w-0 flex-1">
-          <ProjectsPage onOpenSidebar={() => setSidebarOpen(true)} />
+          <AgentPage onOpenSidebar={() => setSidebarOpen(true)} />
         </main>
       </div>
     </div>
