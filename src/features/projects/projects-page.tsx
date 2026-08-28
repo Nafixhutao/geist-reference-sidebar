@@ -60,6 +60,9 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
       });
   }, [projectList, query, sort, status]);
 
+  // Stable identity keeps NewProjectDialog from re-rendering on every page render.
+  const existingIds = useMemo(() => projectList.map((project) => project.id), [projectList]);
+
   return (
     <section className="projects-page min-h-dvh bg-[var(--projects-bg)] px-4 pb-12 pt-14 sm:px-6 lg:px-7">
       <div className="mx-auto w-full max-w-[1440px]">
@@ -195,7 +198,7 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
       <NewProjectDialog
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        existingIds={projectList.map((project) => project.id)}
+        existingIds={existingIds}
         onCreate={(project) => {
           setProjectList((prev) => [project, ...prev]);
           setIsCreateOpen(false);

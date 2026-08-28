@@ -68,7 +68,12 @@ export function SearchPalette({
     }));
   }, [query]);
 
-  const results = useMemo(() => groups.flatMap((group) => group.results), [groups]);
+  // Index is computed once per keystroke instead of searching per rendered
+  // item, keeping lookup O(1) instead of O(n) inside the render loop.
+  const { results, indexByResult } = useMemo(() => {
+    const flat = groups.flatMap((group) => group.results);
+    return { results: flat, indexByResult: new Map(flat.map((result, index) => [result, index])) };
+  }, [groups]);
 
   useEffect(() => {
     if (!open) return;
@@ -177,7 +182,7 @@ export function SearchPalette({
                   <section key={group.section}>
                     <h2 className="px-2 py-2 text-[12px] font-normal leading-[16px] text-[oklch(0.585_0.0161_305)]">{group.section}</h2>
                     {group.results.map((result) => {
-                      const index = results.indexOf(result);
+                      const index = indexByResult.get(result) ?? 0;
                       const active = index === activeIndex;
                       return (
                         <button
