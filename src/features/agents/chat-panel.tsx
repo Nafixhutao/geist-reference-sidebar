@@ -106,7 +106,13 @@ export function AIChat() {
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const idRef = useRef(1);
+  const replyTimer = useRef<number | null>(null);
   const reduce = useReducedMotion() ?? false;
+
+  // The mock reply must never fire after the chat is gone (route change).
+  useEffect(() => () => {
+    if (replyTimer.current !== null) clearTimeout(replyTimer.current);
+  }, []);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -136,7 +142,9 @@ export function AIChat() {
     setInput("");
     setMessages((current) => [...current, { id: idRef.current++, role: "user", text }]);
     setTyping(true);
-    window.setTimeout(() => {
+    if (replyTimer.current !== null) clearTimeout(replyTimer.current);
+    replyTimer.current = window.setTimeout(() => {
+      replyTimer.current = null;
       setTyping(false);
       setMessages((current) => [
         ...current,

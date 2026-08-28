@@ -50,21 +50,44 @@ export function useServiceOverview(projectId: string) {
   const [preDeployStatus, setPreDeployStatus] = useState<DeploymentStatus>("Queued");
   const [workflowStorageReady, setWorkflowStorageReady] = useState(false);
   const deploymentTimersRef = useRef<number[]>([]);
+  const servicesRef = useRef(services);
+  servicesRef.current = services;
+  const storageReadyRef = useRef(false);
 
   useEffect(() => {
     const stored = parseStoredServices(window.localStorage.getItem(projectServiceStorageKey));
     setServices(stored ?? (projectId === "app_ig" ? cloneDefaultServices() : []));
+    storageReadyRef.current = true;
     setStorageReady(true);
   }, [projectId, projectServiceStorageKey]);
 
   useEffect(() => {
     if (!storageReady) return;
-    try {
-      window.localStorage.setItem(projectServiceStorageKey, JSON.stringify(services));
-    } catch {
-      // Keep the prototype usable when storage is blocked or full.
-    }
+    // Dragging writes positions on every pointermove; a trailing debounce keeps
+    // the synchronous stringify + setItem off the per-frame path.
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(projectServiceStorageKey, JSON.stringify(servicesRef.current));
+      } catch {
+        // Keep the prototype usable when storage is blocked or full.
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
   }, [projectServiceStorageKey, services, storageReady]);
+
+  // Flush whatever the debounce has not written yet when leaving the page or
+  // switching projects.
+  useEffect(() => {
+    const key = projectServiceStorageKey;
+    return () => {
+      if (!storageReadyRef.current) return;
+      try {
+        window.localStorage.setItem(key, JSON.stringify(servicesRef.current));
+      } catch {
+        // Keep the prototype usable when storage is blocked or full.
+      }
+    };
+  }, [projectServiceStorageKey]);
 
   useEffect(() => {
     const stored = parseStoredWorkflow(window.localStorage.getItem(projectWorkflowStorageKey));

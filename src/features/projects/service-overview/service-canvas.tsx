@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
+import { memo, useCallback, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
 import {
   GitBranch,
   Layers3,
@@ -40,20 +40,22 @@ type ServiceNodeCardProps = {
   node: ServiceNode;
   selected: boolean;
   menuOpen: boolean;
-  onSelect: () => void;
-  onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
-  onMenuToggle: (event: ReactPointerEvent<HTMLButtonElement>) => void;
-  onAction: (action: NodeAction) => void;
+  onSelect: (id: string) => void;
+  onPointerDown: (id: string, event: ReactPointerEvent<HTMLElement>) => void;
+  onMenuToggle: (id: string) => void;
+  onAction: (id: string, action: NodeAction) => void;
 };
 
-function ServiceNodeCard({ node, selected, menuOpen, onSelect, onPointerDown, onMenuToggle, onAction }: ServiceNodeCardProps) {
+// Memoized: handlers take the node id so their identity stays stable across
+// renders, letting drag/pan frames skip every card except the moving one.
+const ServiceNodeCard = memo(function ServiceNodeCard({ node, selected, menuOpen, onSelect, onPointerDown, onMenuToggle, onAction }: ServiceNodeCardProps) {
   return (
     <article
       className={`service-node ${selected ? "service-node--selected" : ""} ${menuOpen ? "service-node--menu-open" : ""}`}
       data-service-node="true"
       style={{ left: node.position.x, top: node.position.y } as CSSProperties}
-      onPointerDown={onPointerDown}
-      onClick={onSelect}
+      onPointerDown={(event) => onPointerDown(node.id, event)}
+      onClick={() => onSelect(node.id)}
       aria-label={`${node.name} service node`}
     >
       <div className="service-node__header">
@@ -69,7 +71,10 @@ function ServiceNodeCard({ node, selected, menuOpen, onSelect, onPointerDown, on
           aria-expanded={menuOpen}
           data-canvas-control="true"
           onPointerDown={(event) => event.stopPropagation()}
-          onClick={onMenuToggle}
+          onClick={(event) => {
+            event.stopPropagation();
+            onMenuToggle(node.id);
+          }}
         >
           <MoreVertical size={16} strokeWidth={1.8} aria-hidden="true" />
         </button>
@@ -114,23 +119,23 @@ function ServiceNodeCard({ node, selected, menuOpen, onSelect, onPointerDown, on
 
       {menuOpen ? (
         <div className="node-action-menu" role="menu" aria-label={`${node.name} actions`} data-canvas-control="true" onPointerDown={(event) => event.stopPropagation()}>
-          <button type="button" role="menuitem" onClick={() => onAction("logs")}>
+          <button type="button" role="menuitem" onClick={() => onAction(node.id, "logs")}>
             <FileText size={14} strokeWidth={1.7} aria-hidden="true" />
             View logs
           </button>
-          <button type="button" role="menuitem" onClick={() => onAction("redeploy")}>
+          <button type="button" role="menuitem" onClick={() => onAction(node.id, "redeploy")}>
             <Rocket size={14} strokeWidth={1.7} aria-hidden="true" />
             Redeploy
           </button>
-          <button type="button" role="menuitem" onClick={() => onAction("restart")}>
+          <button type="button" role="menuitem" onClick={() => onAction(node.id, "restart")}>
             <RefreshCcw size={14} strokeWidth={1.7} aria-hidden="true" />
             Restart
           </button>
-          <button type="button" role="menuitem" onClick={() => onAction("stop")}>
+          <button type="button" role="menuitem" onClick={() => onAction(node.id, "stop")}>
             <StopCircle size={14} strokeWidth={1.7} aria-hidden="true" />
             Stop
           </button>
-          <button type="button" role="menuitem" onClick={() => onAction("settings")}>
+          <button type="button" role="menuitem" onClick={() => onAction(node.id, "settings")}>
             <Settings size={14} strokeWidth={1.7} aria-hidden="true" />
             Settings
           </button>
@@ -138,7 +143,7 @@ function ServiceNodeCard({ node, selected, menuOpen, onSelect, onPointerDown, on
       ) : null}
     </article>
   );
-}
+});
 
 function EmptyCanvas({ onAdd }: { onAdd: () => void }) {
   const choices = SERVICE_CHOICES.slice(0, 4);
@@ -214,22 +219,31 @@ export function ServiceCanvas({ services, selectedServiceId, deploymentActive, o
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
   const interactionRef = useRef<
     | { kind: "node"; id: string; startX: number; startY: number; originX: number; originY: number; offsetX: number; offsetY: number }
     | { kind: "pan"; startX: number; startY: number; originX: number; originY: number }
     | null
   >(null);
   const draggedRef = useRef(false);
+  // Latest-value refs keep the memoized node handlers dependency-free, so
+  // pointerdown reads fresh pan/zoom/services without new handler identities.
+  const panRef = useRef(pan);
+  panRef.current = pan;
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const servicesRef = useRef(services);
+  servicesRef.current = services;
 
-  const handleNodePointerDown = (id: string, event: ReactPointerEvent<HTMLElement>) => {
+  const handleNodePointerDown = useCallback((id: string, event: ReactPointerEvent<HTMLElement>) => {
     if (event.button !== 0) return;
     event.stopPropagation();
-    const node = services.find((item) => item.id === id);
+    const node = servicesRef.current.find((item) => item.id === id);
     const viewport = viewportRef.current;
     if (!node || !viewport) return;
     const rect = viewport.getBoundingClientRect();
-    const pointerX = (event.clientX - rect.left - pan.x) / zoom;
-    const pointerY = (event.clientY - rect.top - pan.y) / zoom;
+    const pointerX = (event.clientX - rect.left - panRef.current.x) / zoomRef.current;
+    const pointerY = (event.clientY - rect.top - panRef.current.y) / zoomRef.current;
     interactionRef.current = {
       kind: "node",
       id,
@@ -242,7 +256,18 @@ export function ServiceCanvas({ services, selectedServiceId, deploymentActive, o
     };
     draggedRef.current = false;
     event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
+  }, []);
+
+  const handleNodeSelect = useCallback((id: string) => onSelect(id), [onSelect]);
+
+  const handleNodeMenuToggle = useCallback((id: string) => {
+    setMenuOpenId((value) => (value === id ? null : id));
+  }, []);
+
+  const handleNodeAction = useCallback((id: string, action: NodeAction) => {
+    setMenuOpenId(null);
+    onNodeAction(id, action);
+  }, [onNodeAction]);
 
   const handleViewportPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
@@ -251,6 +276,7 @@ export function ServiceCanvas({ services, selectedServiceId, deploymentActive, o
     if (target.closest("[data-service-node]")) return;
     interactionRef.current = { kind: "pan", startX: event.clientX, startY: event.clientY, originX: pan.x, originY: pan.y };
     draggedRef.current = false;
+    setIsPanning(true);
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
@@ -281,6 +307,7 @@ export function ServiceCanvas({ services, selectedServiceId, deploymentActive, o
     const interaction = interactionRef.current;
     if (interaction?.kind === "node" && !draggedRef.current) onSelect(interaction.id);
     interactionRef.current = null;
+    setIsPanning(false);
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
 
@@ -319,7 +346,7 @@ export function ServiceCanvas({ services, selectedServiceId, deploymentActive, o
 
       <div
         ref={viewportRef}
-        className={`canvas-viewport ${interactionRef.current?.kind === "pan" ? "canvas-viewport--panning" : ""}`}
+        className={`canvas-viewport ${isPanning ? "canvas-viewport--panning" : ""}`}
         onPointerDown={handleViewportPointerDown}
         onPointerMove={handleViewportPointerMove}
         onPointerUp={handleViewportPointerUp}
@@ -346,16 +373,10 @@ export function ServiceCanvas({ services, selectedServiceId, deploymentActive, o
                 node={node}
                 selected={node.id === selectedServiceId}
                 menuOpen={node.id === menuOpenId}
-                onSelect={() => onSelect(node.id)}
-                onPointerDown={(event) => handleNodePointerDown(node.id, event)}
-                onMenuToggle={(event) => {
-                  event.stopPropagation();
-                  setMenuOpenId((value) => (value === node.id ? null : node.id));
-                }}
-                onAction={(action) => {
-                  setMenuOpenId(null);
-                  onNodeAction(node.id, action);
-                }}
+                onSelect={handleNodeSelect}
+                onPointerDown={handleNodePointerDown}
+                onMenuToggle={handleNodeMenuToggle}
+                onAction={handleNodeAction}
               />
             ))
           )}
