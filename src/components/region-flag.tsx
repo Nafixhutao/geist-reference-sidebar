@@ -1,4 +1,4 @@
-import type { RegionCountry } from "./types";
+import type { RegionCountry } from "@/lib/region";
 
 const regionCountryNames: Record<RegionCountry, string> = {
   singapore: "Singapore",

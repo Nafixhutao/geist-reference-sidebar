@@ -1,6 +1,6 @@
 "use client";
 
-import { PixelSkeleton } from "./PixelSkeleton";
+import { PixelSkeleton } from "./pixel-skeleton";
 
 /** Contoh penggunaan PixelSkeleton: dasar, kartu, dan layout. */
 export function SkeletonShowcase() {

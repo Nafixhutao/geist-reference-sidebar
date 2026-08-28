@@ -2,8 +2,8 @@ import { Box, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { formatProjectDate } from "./data";
-import { ProjectStatusBadge } from "./ProjectStatusBadge";
-import { RegionLabel } from "./RegionFlag";
+import { ProjectStatusBadge } from "./project-status-badge";
+import { RegionLabel } from "@/components/region-flag";
 import type { Project, ProjectView } from "./types";
 
 export const projectTableColumns =

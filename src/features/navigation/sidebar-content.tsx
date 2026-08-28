@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
-import { PixelSkeleton } from "../PixelSkeleton";
+import { PixelSkeleton } from "@/components/pixel-skeleton";
 import {
   EASE_OUT,
   LABEL_ENTER_TRANSITION,
@@ -43,7 +43,7 @@ import {
   RailLabel,
   rowClass,
   tap,
-} from "./shared";
+} from "./sidebar-shared";
 import type { NavItem, NavRowProps } from "./types";
 
 // Open keeps the original morph: clip-path reveal with a staggered blur-up.

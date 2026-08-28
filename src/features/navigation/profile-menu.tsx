@@ -9,7 +9,7 @@ import {
   SPRING_PRESS,
 } from "@/lib/ease";
 import { cn } from "@/lib/utils";
-import { ChevronToggle, Divider, menuRowClass, RailLabel, tap } from "./shared";
+import { ChevronToggle, Divider, menuRowClass, RailLabel, tap } from "./sidebar-shared";
 
 type Theme = "light" | "dark" | "system";
 

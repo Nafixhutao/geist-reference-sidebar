@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { PANEL_CLOSE_TRANSITION, PANEL_TRANSITION, REDUCED_TRANSITION } from "@/lib/ease";
 import { cn } from "@/lib/utils";
-import { SidebarContent } from "./navigation";
+import { SidebarContent } from "./sidebar-content";
 import type { SidebarProps } from "./types";
 
 const FOCUSABLE_SELECTOR = [

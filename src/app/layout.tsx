@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/geist";
 import "@fontsource-variable/source-code-pro";
-import "../index.css";
+import "../styles/global.css";
 
 export const metadata: Metadata = {
   title: "Nafixhutao Sidebar",

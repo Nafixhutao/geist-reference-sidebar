@@ -3,15 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Menu, Plus } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ProjectCard, ProjectTableHeader } from "./ProjectCard";
-import { ProjectsSkeleton } from "./ProjectSkeletons";
-import { ProjectToolbar } from "./ProjectToolbar";
-import { NewProjectDialog } from "./NewProjectDialog";
+import { useApplicationShell } from "@/components/application-shell";
+import { ProjectCard, ProjectTableHeader } from "./project-card";
+import { ProjectsSkeleton } from "./project-skeletons";
+import { ProjectToolbar } from "./project-toolbar";
+import { NewProjectDialog } from "./new-project-dialog";
 import { projects } from "./data";
-import { loadProjects, saveProjects } from "./projectStore";
+import { loadProjects, saveProjects } from "./project-store";
 import type { Project, ProjectSort, ProjectStatus, ProjectView } from "./types";
 
 export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+  const shell = useApplicationShell();
+  const openSidebar = onOpenSidebar ?? shell?.openSidebar;
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<ProjectStatus | "all">("all");
   const [sort, setSort] = useState<ProjectSort>("name-asc");
@@ -75,7 +78,7 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
             </div>
 
             <div className="flex shrink-0 items-center gap-2 lg:absolute lg:right-0 lg:top-5">
-              {onOpenSidebar && (
+              {openSidebar && (
                 <button
                   type="button"
                   onClick={onOpenSidebar}

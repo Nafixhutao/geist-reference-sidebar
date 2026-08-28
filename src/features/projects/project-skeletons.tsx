@@ -1,6 +1,6 @@
-import { PixelSkeleton } from "@/PixelSkeleton";
+import { PixelSkeleton } from "@/components/pixel-skeleton";
 import { cn } from "@/lib/utils";
-import { ProjectTableHeader, projectTableColumns } from "./ProjectCard";
+import { ProjectTableHeader, projectTableColumns } from "./project-card";
 import type { ProjectView } from "./types";
 
 function ProjectRowSkeleton() {

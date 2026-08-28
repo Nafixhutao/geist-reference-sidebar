@@ -1,6 +1,6 @@
-import { ProjectDetailPage } from "@/projects/ProjectDetailPage";
-import { ProjectClientLookup } from "@/projects/ProjectClientLookup";
-import { projects } from "@/projects/data";
+import { ProjectDetailPage } from "@/features/projects/project-detail-page";
+import { ProjectClientLookup } from "@/features/projects/project-client-lookup";
+import { projects } from "@/features/projects/data";
 
 export default async function ProjectPage({
   params,

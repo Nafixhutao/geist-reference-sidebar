@@ -4,9 +4,10 @@ import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Activity, Bot, ChevronLeft, ChevronDown, ChevronRight, Coins, Menu, MoreVertical, Plus, Search, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useApplicationShell } from "@/components/application-shell";
 import { agents, formatRequests, formatTokens } from "./data";
-import { AIChat } from "./ChatPanel";
-import { RegionFlag, regionCountryName } from "../projects/RegionFlag";
+import { AIChat } from "./chat-panel";
+import { RegionFlag, regionCountryName } from "@/components/region-flag";
 import type { Agent, AgentStatus } from "./types";
 
 type AgentSort = "name-asc" | "name-desc";
@@ -151,6 +152,8 @@ function SelectField<T extends string>({ value, onChange, label, minWidth, child
 }
 
 export function AgentPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+  const shell = useApplicationShell();
+  const openSidebar = onOpenSidebar ?? shell?.openSidebar;
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<AgentStatus | "all">("all");
   const [sort, setSort] = useState<AgentSort>("name-asc");
@@ -204,7 +207,7 @@ export function AgentPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-2 lg:absolute lg:right-0 lg:top-5">
-              {onOpenSidebar && (
+              {openSidebar && (
                 <button
                   type="button"
                   onClick={onOpenSidebar}

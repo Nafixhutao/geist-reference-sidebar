@@ -1,4 +1,4 @@
-import type { RegionCountry } from "../projects/types";
+import type { RegionCountry } from "@/lib/region";
 
 export type AgentStatus = "active" | "idle";
 

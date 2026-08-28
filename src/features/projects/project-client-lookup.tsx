@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ProjectDetailPage } from "./ProjectDetailPage";
-import { loadProjects } from "./projectStore";
+import { ProjectDetailPage } from "./project-detail-page";
+import { loadProjects } from "./project-store";
 import type { Project } from "./types";
 
 export function ProjectClientLookup({ projectId }: { projectId: string }) {

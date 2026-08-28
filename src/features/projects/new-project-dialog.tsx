@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { buildProject, type NewProjectInput } from "./projectStore";
+import { buildProject, type NewProjectInput } from "./project-store";
 import type { Project } from "./types";
 
 const PROVIDERS = ["AWS", "Google Cloud", "Vercel"] as const;

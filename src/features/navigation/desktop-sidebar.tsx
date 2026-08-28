@@ -8,7 +8,7 @@ import {
   SIDEBAR_EXPAND_TRANSITION,
 } from "@/lib/ease";
 import { cn } from "@/lib/utils";
-import { SidebarContent } from "./navigation";
+import { SidebarContent } from "./sidebar-content";
 
 /** Desktop rail width when collapsed to icons only — measured from the
  * reference rail capture: 51px content + 1px border. */

@@ -1,6 +1,6 @@
 "use client";
 
-import { ServiceOverview } from "./ServiceOverview";
+import { ServiceOverview } from "./service-overview/service-overview";
 import type { Project } from "./types";
 
 export function ProjectDetailPage({ project }: { project: Project }) {

@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/animate-ui/components/animate/tooltip";
+} from "@/components/animate-ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { ProjectSort, ProjectStatus, ProjectView } from "./types";
 
