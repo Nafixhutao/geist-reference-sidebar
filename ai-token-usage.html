@@ -116,23 +116,41 @@
   .empty { color: var(--muted); text-align: center; padding: 24px; font-size: 13px; }
   .note { color: var(--muted); font-size: 11.5px; margin-top: 10px; }
   .delete-btn { padding: 4px 8px; font-size: 12px; }
+  .budget-line { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; font-size: 12.5px; margin-bottom: 7px; }
+  .warn { color: var(--danger); }
+  .bar-fill.danger { background: var(--danger); }
+  .proj { font-size: 11px; color: var(--muted); }
   @media (max-width: 640px) {
     .bar-row { grid-template-columns: 100px 1fr 100px; }
     .table-scroll { overflow-x: auto; }
-    table { min-width: 640px; }
+    table { min-width: 720px; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Catatan Penggunaan Token AI</h1>
-  <p class="sub">Pencatat penggunaan token &amp; estimasi biaya per model — data disimpan lokal di browser (localStorage), tidak dikirim ke mana pun.</p>
+  <p class="sub">Pencatat penggunaan token &amp; estimasi biaya per model dan per proyek — data disimpan lokal di browser (localStorage), tidak dikirim ke mana pun.</p>
 
   <div class="cards">
     <div class="card"><div class="label">Total Token</div><div class="value" id="totalTokens">0</div></div>
     <div class="card"><div class="label">Input Token</div><div class="value blue" id="totalInput">0</div></div>
     <div class="card"><div class="label">Output Token</div><div class="value green" id="totalOutput">0</div></div>
     <div class="card"><div class="label">Estimasi Biaya</div><div class="value" id="totalCost">$0.00</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>Target Biaya Bulan Ini</h2>
+    <div class="form-grid">
+      <div>
+        <label for="budgetInput">Target per bulan (USD)</label>
+        <input type="number" id="budgetInput" min="0" step="0.5" placeholder="mis. 5">
+      </div>
+      <div>
+        <button class="ghost" id="budgetSave" style="width:100%">Simpan target</button>
+      </div>
+    </div>
+    <div id="budgetBar" style="margin-top:14px"></div>
   </div>
 
   <div class="panel">
@@ -147,12 +165,17 @@
         <select id="fModel"></select>
       </div>
       <div>
+        <label for="fProject">Proyek</label>
+        <input type="text" id="fProject" list="projectList" placeholder="mis. geist-reference-sidebar">
+        <datalist id="projectList"></datalist>
+      </div>
+      <div>
         <label for="fInput">Input token</label>
-        <input type="number" id="fInput" min="0" placeholder="mis. 12500">
+        <input type="text" inputmode="numeric" id="fInput" placeholder="mis. 125k">
       </div>
       <div>
         <label for="fOutput">Output token</label>
-        <input type="number" id="fOutput" min="0" placeholder="mis. 3400">
+        <input type="text" inputmode="numeric" id="fOutput" placeholder="mis. 8k">
       </div>
       <div>
         <label for="fNote">Catatan (opsional)</label>
@@ -163,6 +186,7 @@
       </div>
     </div>
     <p class="note" id="priceNote"></p>
+    <p class="note">Tip: angka token per sesi bisa dilihat dari indikator penggunaan di ZCode atau dashboard penyedia (Z.ai), lalu catat di sini. Penulisan singkat seperti <span class="mono">125k</span>, <span class="mono">1,2m</span>, atau <span class="mono">125.000</span> juga diterima.</p>
   </div>
 
   <div class="panel">
@@ -171,9 +195,15 @@
   </div>
 
   <div class="panel">
+    <h2>Pemakaian Harian (14 hari terakhir)</h2>
+    <div id="dayBars"></div>
+  </div>
+
+  <div class="panel">
     <h2>Riwayat</h2>
     <div class="toolbar">
       <select id="filterModel"><option value="">Semua model</option></select>
+      <select id="filterProject"><option value="">Semua proyek</option></select>
       <select id="filterMonth"><option value="">Semua bulan</option></select>
       <span style="flex:1"></span>
       <button class="ghost" id="exportBtn">Export JSON</button>
@@ -185,7 +215,7 @@
       <table>
         <thead>
           <tr>
-            <th>Tanggal</th><th>Model</th>
+            <th>Tanggal</th><th>Model</th><th>Proyek</th>
             <th class="num">Input</th><th class="num">Output</th><th class="num">Total</th>
             <th class="num">Biaya</th><th>Catatan</th><th></th>
           </tr>
@@ -217,19 +247,21 @@ const MODELS = [
 ];
 
 const STORE_KEY = "ai-token-usage-v1";
+const BUDGET_KEY = "ai-token-usage-budget-v1";
 let entries = [];
+let budget = 0;
 
 // Data awal: perkiraan pemakaian token sesi ZCode (model GLM-5.3 Flash) saat
 // mengerjakan refactor proyek geist-reference-sidebar. Angka ini ESTIMASI
 // manual, bukan data resmi dari penyedia — sesuaikan bila punya angka asli.
 const SEED_ENTRIES = [
-  { id: "seed-01-eksplorasi",   date: "2026-08-28", model: "glm-5.3-flash", input: 185000, output: 9000,  note: "Baca codebase (~9.000 baris), docs Next.js 16.3, baseline git" },
-  { id: "seed-02-move",         date: "2026-08-28", model: "glm-5.3-flash", input: 125000, output: 14000, note: "Tahap 1: pindah/rename 35+ file ke struktur feature-first kebab-case" },
-  { id: "seed-03-overview",     date: "2026-08-28", model: "glm-5.3-flash", input: 160000, output: 38000, note: "Tahap 2-3: pecah ServiceOverview jadi model + hook + canvas/panel/dialog" },
-  { id: "seed-04-predeploy",    date: "2026-08-28", model: "glm-5.3-flash", input: 95000,  output: 26000, note: "Tahap 4: pecah PreDeployFlow jadi 3 step + summary + model" },
-  { id: "seed-05-shell-css",    date: "2026-08-28", model: "glm-5.3-flash", input: 85000,  output: 12000, note: "Tahap 5-6: application shell bersama + pecah index.css ke src/styles" },
-  { id: "seed-06-verifikasi",   date: "2026-08-28", model: "glm-5.3-flash", input: 140000, output: 18000, note: "Typecheck, production build, smoke test 3 route via browser, screenshot tema" },
-  { id: "seed-07-pr",           date: "2026-08-28", model: "glm-5.3-flash", input: 45000,  output: 7000,  note: "Commit, push, buat PR #1 + bikin file tracker ini" },
+  { id: "seed-01-eksplorasi",   date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 185000, output: 9000,  note: "Baca codebase (~9.000 baris), docs Next.js 16.3, baseline git" },
+  { id: "seed-02-move",         date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 125000, output: 14000, note: "Tahap 1: pindah/rename 35+ file ke struktur feature-first kebab-case" },
+  { id: "seed-03-overview",     date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 160000, output: 38000, note: "Tahap 2-3: pecah ServiceOverview jadi model + hook + canvas/panel/dialog" },
+  { id: "seed-04-predeploy",    date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 95000,  output: 26000, note: "Tahap 4: pecah PreDeployFlow jadi 3 step + summary + model" },
+  { id: "seed-05-shell-css",    date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 85000,  output: 12000, note: "Tahap 5-6: application shell bersama + pecah index.css ke src/styles" },
+  { id: "seed-06-verifikasi",   date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 140000, output: 18000, note: "Typecheck, production build, smoke test 3 route via browser, screenshot tema" },
+  { id: "seed-07-pr",           date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 45000,  output: 7000,  note: "Commit, push, buat PR #1 + bikin file tracker ini" },
 ];
 
 function load() {
@@ -242,6 +274,7 @@ function load() {
       entries = SEED_ENTRIES.map((e) => ({ ...e }));
       save();
     }
+    budget = parseFloat(localStorage.getItem(BUDGET_KEY)) || 0;
   } catch { entries = []; }
 }
 function save() {
@@ -252,6 +285,20 @@ function modelById(id) {
 }
 function fmt(n) { return n.toLocaleString("id-ID"); }
 function fmtCost(v) { return "$" + v.toFixed(2); }
+// Escape agar catatan/proyek dari input atau file import tidak dieksekusi sebagai HTML.
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+// Terima "125000", "125.000", "125k", "1,2k", "1.2m".
+function parseTokenNum(raw) {
+  const s = String(raw).trim().toLowerCase().replace(/\s/g, "");
+  if (!s) return 0;
+  const m = s.match(/^([0-9.,]+)(k|m)?$/);
+  if (!m) return 0;
+  if (m[2]) return Math.round((parseFloat(m[1].replace(",", ".")) || 0) * (m[2] === "k" ? 1e3 : 1e6));
+  return parseInt(m[1].replace(/[.,]/g, ""), 10) || 0;
+}
 function entryCost(e) {
   const m = modelById(e.model);
   const pin = e.priceIn ?? m.in;
@@ -268,6 +315,9 @@ function initForm() {
     sel.appendChild(opt);
   }
   document.getElementById("fDate").value = new Date().toISOString().slice(0, 10);
+  const lastProject = [...entries].reverse().find((e) => e.project);
+  document.getElementById("fProject").value = lastProject ? lastProject.project : "geist-reference-sidebar";
+  document.getElementById("budgetInput").value = budget || "";
   updatePriceNote();
   sel.addEventListener("change", updatePriceNote);
 }
@@ -282,11 +332,12 @@ function updatePriceNote() {
 function addEntry() {
   const date = document.getElementById("fDate").value || new Date().toISOString().slice(0, 10);
   const model = document.getElementById("fModel").value;
-  const input = parseInt(document.getElementById("fInput").value, 10) || 0;
-  const output = parseInt(document.getElementById("fOutput").value, 10) || 0;
+  const project = document.getElementById("fProject").value.trim() || "(tanpa proyek)";
+  const input = parseTokenNum(document.getElementById("fInput").value);
+  const output = parseTokenNum(document.getElementById("fOutput").value);
   const note = document.getElementById("fNote").value.trim();
   if (input + output === 0) { alert("Isi jumlah token terlebih dahulu."); return; }
-  entries.push({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), date, model, input, output, note });
+  entries.push({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), date, model, project, input, output, note });
   save();
   document.getElementById("fInput").value = "";
   document.getElementById("fOutput").value = "";
@@ -302,9 +353,14 @@ function deleteEntry(id) {
 
 function filtered() {
   const fm = document.getElementById("filterModel").value;
+  const fp = document.getElementById("filterProject").value;
   const mo = document.getElementById("filterMonth").value;
   return entries.filter((e) =>
-    (!fm || e.model === fm) && (!mo || e.date.slice(0, 7) === mo));
+    (!fm || e.model === fm) && (!fp || (e.project ?? "") === fp) && (!mo || e.date.slice(0, 7) === mo));
+}
+
+function localDateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function render() {
@@ -338,19 +394,60 @@ function render() {
       }).join("")
     : '<div class="empty">Belum ada data untuk ditampilkan.</div>';
 
+  // grafik harian 14 hari terakhir (mengikuti filter aktif)
+  const perDay = new Map();
+  for (const e of list) perDay.set(e.date, (perDay.get(e.date) ?? 0) + e.input + e.output);
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = localDateKey(d);
+    days.push({ key, label: d.toLocaleDateString("id-ID", { day: "numeric", month: "short" }), tokens: perDay.get(key) ?? 0 });
+  }
+  const maxDay = Math.max(...days.map((d) => d.tokens), 0);
+  document.getElementById("dayBars").innerHTML = maxDay
+    ? days.map((d) => {
+        const pct = Math.max((d.tokens / maxDay) * 100, 2);
+        return `<div class="bar-row">
+          <span>${esc(d.label)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${d.tokens ? pct : 0}%"></div></div>
+          <span class="mono" style="text-align:right">${d.tokens ? fmt(d.tokens) : "—"}</span>
+        </div>`;
+      }).join("")
+    : '<div class="empty">Belum ada pemakaian dalam 14 hari terakhir.</div>';
+
+  // target biaya bulan ini (tidak terpengaruh filter)
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const monthCost = entries.filter((e) => e.date.slice(0, 7) === monthKey).reduce((a, e) => a + entryCost(e), 0);
+  const bEl = document.getElementById("budgetBar");
+  if (budget > 0) {
+    const ratio = monthCost / budget;
+    const pct = Math.min(ratio * 100, 100);
+    const over = ratio > 1;
+    bEl.innerHTML = `<div class="budget-line">
+        <span>Terpakai bulan ini: <strong class="mono">${fmtCost(monthCost)}</strong></span>
+        <span class="${over ? "warn" : ""}">${over ? "Melebihi target " + fmtCost(budget) : Math.round(ratio * 100) + "% dari target " + fmtCost(budget)}</span>
+      </div>
+      <div class="bar-track" style="height:16px"><div class="bar-fill${over ? " danger" : ""}" style="width:${pct}%"></div></div>`;
+  } else {
+    bEl.innerHTML = '<div class="empty">Belum ada target. Isi target biaya per bulan untuk memantau pemakaian.</div>';
+  }
+
   // tabel riwayat (terbaru dulu)
   const rows = [...list].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   document.getElementById("rows").innerHTML = rows.map((e) => {
     const m = modelById(e.model);
     return `<tr>
       <td>${e.date}</td>
-      <td><span class="tag">${m.name}</span></td>
+      <td><span class="tag">${esc(m.name)}</span></td>
+      <td><span class="proj">${esc(e.project ?? "")}</span></td>
       <td class="num mono">${fmt(e.input)}</td>
       <td class="num mono">${fmt(e.output)}</td>
       <td class="num mono"><strong>${fmt(e.input + e.output)}</strong></td>
       <td class="num mono">${fmtCost(entryCost(e))}</td>
-      <td>${e.note ?? ""}</td>
-      <td><button class="danger ghost delete-btn" data-id="${e.id}">Hapus</button></td>
+      <td>${esc(e.note)}</td>
+      <td><button class="danger ghost delete-btn" data-id="${esc(e.id)}">Hapus</button></td>
     </tr>`;
   }).join("");
   document.getElementById("emptyMsg").style.display = rows.length ? "none" : "block";
@@ -360,7 +457,13 @@ function render() {
   const selM = document.getElementById("filterModel");
   const curM = selM.value;
   selM.innerHTML = '<option value="">Semua model</option>' +
-    models.map((id) => `<option value="${id}" ${id === curM ? "selected" : ""}>${modelById(id).name}</option>`).join("");
+    models.map((id) => `<option value="${esc(id)}" ${id === curM ? "selected" : ""}>${esc(modelById(id).name)}</option>`).join("");
+  const projects = [...new Set(entries.map((e) => e.project).filter(Boolean))];
+  const selP = document.getElementById("filterProject");
+  const curP = selP.value;
+  selP.innerHTML = '<option value="">Semua proyek</option>' +
+    projects.map((p) => `<option value="${esc(p)}" ${p === curP ? "selected" : ""}>${esc(p)}</option>`).join("");
+  document.getElementById("projectList").innerHTML = projects.map((p) => `<option value="${esc(p)}">`).join("");
   const months = [...new Set(entries.map((e) => e.date.slice(0, 7)))].sort().reverse();
   const selMo = document.getElementById("filterMonth");
   const curMo = selMo.value;
@@ -374,7 +477,13 @@ document.getElementById("rows").addEventListener("click", (ev) => {
   if (btn) deleteEntry(btn.dataset.id);
 });
 document.getElementById("filterModel").addEventListener("change", render);
+document.getElementById("filterProject").addEventListener("change", render);
 document.getElementById("filterMonth").addEventListener("change", render);
+document.getElementById("budgetSave").addEventListener("click", () => {
+  budget = parseFloat(document.getElementById("budgetInput").value) || 0;
+  try { localStorage.setItem(BUDGET_KEY, String(budget)); } catch {}
+  render();
+});
 document.getElementById("clearBtn").addEventListener("click", () => {
   if (entries.length && confirm("Hapus semua catatan?")) { entries = []; save(); render(); }
 });
