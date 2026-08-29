@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowDownWideNarrow, Check, ChevronDown, LayoutGrid, List, Search } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Check, ChevronDown, LayoutGrid, List, Search } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   Tooltip,
   TooltipContent,
@@ -185,47 +185,76 @@ function Dropdown<T extends string>({
 
 function SortButton({ sort, onChange }: { sort: ProjectSort; onChange: (value: ProjectSort) => void }) {
   const descending = sort === "name-desc";
+  const reduceMotion = useReducedMotion();
+  const shift = { type: "spring", stiffness: 500, damping: 28 } as const;
+  // One consistent travel direction per toggle: descending content rolls up,
+  // ascending content rolls down — matching the arrow icons.
+  const from = descending ? 1 : -1;
+  const rollLabels = [
+    { text: "(A–Z)", active: !descending, tone: "text-[var(--projects-muted)]" },
+    { text: "(Z–A)", active: descending, tone: "text-[var(--projects-accent)]" },
+  ] as const;
 
   return (
     <motion.button
       type="button"
       aria-label="Sort projects by name"
+      aria-pressed={descending}
       onClick={() => onChange(descending ? "name-asc" : "name-desc")}
-      whileTap={{ scale: 0.96 }}
-      transition={{ duration: 0.12, ease: "easeOut" }}
+      whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+      transition={{ type: "spring", stiffness: 520, damping: 30 }}
       className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-[var(--projects-border)] bg-[var(--projects-surface)] px-3.5 text-xs font-medium leading-4 text-[var(--projects-text)] transition-colors hover:bg-white/[0.04]"
     >
-      <motion.span
-        aria-hidden="true"
-        animate={{ rotate: descending ? 180 : 0 }}
-        transition={{ type: "spring", stiffness: 350, damping: 22 }}
-        className="shrink-0 text-[var(--projects-muted)]"
-      >
-        <ArrowDownWideNarrow size={14} strokeWidth={1.8} />
-      </motion.span>
+      <span className="relative inline-flex size-4 shrink-0 overflow-hidden" aria-hidden="true">
+        <motion.span
+          className="absolute inset-0 flex items-center justify-center text-[var(--projects-muted)]"
+          initial={false}
+          animate={descending ? { y: "-110%", opacity: 0, filter: "blur(3px)" } : { y: "0%", opacity: 1, filter: "blur(0px)" }}
+          transition={reduceMotion ? { duration: 0 } : shift}
+        >
+          <ArrowUpNarrowWide size={14} strokeWidth={1.8} />
+        </motion.span>
+        <motion.span
+          className="absolute inset-0 flex items-center justify-center text-[var(--projects-muted)]"
+          initial={false}
+          animate={descending ? { y: "0%", opacity: 1, filter: "blur(0px)" } : { y: "110%", opacity: 0, filter: "blur(3px)" }}
+          transition={reduceMotion ? { duration: 0 } : shift}
+        >
+          <ArrowDownWideNarrow size={14} strokeWidth={1.8} />
+        </motion.span>
+      </span>
       Sorted by name
-      <AnimatePresence initial={false}>
-        {descending && (
+      {/* Constant-width slot: both direction labels stay mounted and roll over
+          each other, so the button never resizes — animated width made
+          mid-animation clicks land outside the button. */}
+      <span className="relative inline-block overflow-hidden whitespace-nowrap" aria-hidden="true">
+        <span className="invisible block">(Z–A)</span>
+        {rollLabels.map(({ text, active, tone }) => (
           <motion.span
-            key="sort-suffix"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: "auto", opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{
-              width: { type: "spring", stiffness: 500, damping: 33 },
-              opacity: {
-                duration: 0.14,
-                ease: "easeOut",
-                delay: descending ? 0.05 : 0,
-              },
-            }}
-            className="inline-block overflow-hidden whitespace-nowrap"
-            aria-hidden="true"
+            key={text}
+            className={`absolute inset-0 flex ${tone}`}
+            initial={false}
+            animate={{ opacity: active ? 1 : 0 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
           >
-            (Z–A)
+            {text.split("").map((char, i) => (
+              <motion.span
+                key={`${char}-${i}`}
+                className="inline-block"
+                initial={false}
+                animate={active ? { y: 0, filter: "blur(0px)" } : { y: -12 * from, filter: "blur(2px)" }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : { ...shift, delay: active ? 0.02 + i * 0.024 : i * 0.014 }
+                }
+              >
+                {char}
+              </motion.span>
+            ))}
           </motion.span>
-        )}
-      </AnimatePresence>
+        ))}
+      </span>
     </motion.button>
   );
 }
