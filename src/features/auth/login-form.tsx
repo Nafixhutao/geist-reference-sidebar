@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Eye, EyeOff, Lock } from "lucide-react";
 
 // Brand marks are tiny inline SVGs — not worth an icon-package dependency.
@@ -43,6 +44,23 @@ function GitHubMark() {
   );
 }
 
+// Official two-tone cloud mark, inlined verbatim — icon packages only ship the
+// single-color version.
+function CloudflareMark() {
+  return (
+    <svg viewBox="0 0 256 117" className="h-[26px] w-auto" aria-hidden="true">
+      <path
+        fill="#FBAD41"
+        d="M205.52,50.81 C204.66,50.81 203.82,50.84 202.97,50.87 C202.83,50.88 202.70,50.91 202.57,50.96 C202.12,51.12 201.77,51.49 201.65,51.96 L198.02,64.63 C196.46,70.08 197.04,75.11 199.67,78.80 C202.08,82.22 206.09,84.23 210.96,84.46 L230.64,85.65 C231.22,85.68 231.73,85.97 232.04,86.43 C232.36,86.93 232.44,87.56 232.24,88.12 C231.91,89.05 231.08,89.70 230.10,89.78 L209.65,90.98 C198.55,91.49 186.59,100.56 182.40,111.61 L180.93,115.51 C180.80,115.84 180.83,116.21 181.03,116.50 C181.22,116.80 181.54,116.98 181.89,117 L252.32,117 C253.16,117.00 253.90,116.44 254.13,115.63 C255.38,111.14 256.01,106.49 256,101.83 C256,73.67 233.42,50.84 205.55,50.84"
+      />
+      <path
+        fill="#F6821F"
+        d="M174.78,115.36 L176.08,110.78 C177.65,105.33 177.07,100.30 174.45,96.61 C172.03,93.19 168.02,91.18 163.15,90.95 L70.84,89.76 C70.26,89.75 69.71,89.46 69.38,88.98 C69.05,88.48 68.98,87.85 69.18,87.29 C69.50,86.36 70.35,85.71 71.33,85.63 L164.50,84.43 C175.57,83.92 187.52,74.85 191.71,63.80 L197.02,49.76 C197.24,49.16 197.29,48.52 197.18,47.90 C191.13,20.51 166.91,0 137.96,0 C111.27,0 88.63,17.40 80.50,41.60 C75.03,37.44 68.18,35.52 61.34,36.24 C48.55,37.52 38.25,47.95 36.98,60.88 C36.65,64.11 36.89,67.37 37.68,70.52 C16.77,71.14 0,88.45 0,109.73 C0,111.65 0.14,113.54 0.41,115.39 C0.53,116.29 1.29,116.96 2.20,116.96 L172.68,116.96 C173.66,116.94 174.52,116.28 174.78,115.33"
+      />
+    </svg>
+  );
+}
+
 const SOCIAL_PROVIDERS: Array<{ name: string; mark: ReactNode }> = [
   { name: "Google", mark: <GoogleMark /> },
   { name: "Apple", mark: <AppleMark /> },
@@ -59,6 +77,7 @@ const linkClass = "font-medium text-[#4d8dff] underline underline-offset-2 hover
 const preventPlaceholderNav = (event: MouseEvent<HTMLAnchorElement>) => event.preventDefault();
 
 export function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -71,11 +90,15 @@ export function LoginForm() {
     setSubmitting(true);
     // Mock sign-in; replace with a real auth call when a backend exists.
     await new Promise((resolve) => setTimeout(resolve, 1200));
-    setSubmitting(false);
+    router.push("/");
   }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-[#0c0c0d] px-4 py-14 font-sans text-white">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center bg-[#0c0c0d] px-4 py-14 font-sans text-white">
+      <a href="/" aria-label="Cloudflare" className="absolute left-6 top-[18px]">
+        <CloudflareMark />
+      </a>
+
       <div className="w-full max-w-[364px]">
         <h1 className="text-center text-2xl font-bold leading-8 tracking-[-0.01em]">Sign in to Cloudflare</h1>
 
