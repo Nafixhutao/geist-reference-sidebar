@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catatan Penggunaan Token AI</title>
+<style>
+  :root {
+    --bg: #101014;
+    --surface: #1a1a20;
+    --surface-2: #222229;
+    --border: #303038;
+    --text: #f2f2f4;
+    --muted: #9d9da8;
+    --accent: #3ecf8e;
+    --accent-2: #5b9dff;
+    --danger: #ff7a82;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 22px; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .mono { font-family: "Cascadia Code", Consolas, monospace; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .card .value { font-size: 22px; font-weight: 600; margin-top: 6px; }
+  .card .value.green { color: var(--accent); }
+  .card .value.blue { color: var(--accent-2); }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 20px;
+  }
+  .panel h2 { font-size: 14px; margin-bottom: 14px; }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    align-items: end;
+  }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  input, select {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 9px 10px;
+    font-size: 13px;
+    outline: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  button {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #0c130f; font-weight: 600; }
+  button.ghost { background: transparent; }
+  button.danger { color: var(--danger); }
+  button:hover { filter: brightness(1.12); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 9px 10px; border-bottom: 1px solid #26262d; }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: color-mix(in srgb, var(--accent-2) 18%, transparent);
+    color: var(--accent-2);
+  }
+
+  .bar-row { display: grid; grid-template-columns: 150px 1fr 130px; gap: 10px; align-items: center; margin-bottom: 9px; font-size: 12.5px; }
+  .bar-track { background: var(--surface-2); border-radius: 999px; height: 14px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .toolbar select, .toolbar input { width: auto; }
+  .empty { color: var(--muted); text-align: center; padding: 24px; font-size: 13px; }
+  .note { color: var(--muted); font-size: 11.5px; margin-top: 10px; }
+  .delete-btn { padding: 4px 8px; font-size: 12px; }
+  .budget-line { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; font-size: 12.5px; margin-bottom: 7px; }
+  .warn { color: var(--danger); }
+  .bar-fill.danger { background: var(--danger); }
+  .proj { font-size: 11px; color: var(--muted); }
+  @media (max-width: 640px) {
+    .bar-row { grid-template-columns: 100px 1fr 100px; }
+    .table-scroll { overflow-x: auto; }
+    table { min-width: 720px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Catatan Penggunaan Token AI</h1>
+  <p class="sub">Pencatat penggunaan token &amp; estimasi biaya per model dan per proyek — data disimpan lokal di browser (localStorage), tidak dikirim ke mana pun.</p>
+
+  <div class="cards">
+    <div class="card"><div class="label">Total Token</div><div class="value" id="totalTokens">0</div></div>
+    <div class="card"><div class="label">Input Token</div><div class="value blue" id="totalInput">0</div></div>
+    <div class="card"><div class="label">Output Token</div><div class="value green" id="totalOutput">0</div></div>
+    <div class="card"><div class="label">Estimasi Biaya</div><div class="value" id="totalCost">$0.00</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>Target Biaya Bulan Ini</h2>
+    <div class="form-grid">
+      <div>
+        <label for="budgetInput">Target per bulan (USD)</label>
+        <input type="number" id="budgetInput" min="0" step="0.5" placeholder="mis. 5">
+      </div>
+      <div>
+        <button class="ghost" id="budgetSave" style="width:100%">Simpan target</button>
+      </div>
+    </div>
+    <div id="budgetBar" style="margin-top:14px"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Tambah Pemakaian</h2>
+    <div class="form-grid">
+      <div>
+        <label for="fDate">Tanggal</label>
+        <input type="date" id="fDate">
+      </div>
+      <div>
+        <label for="fModel">Model</label>
+        <select id="fModel"></select>
+      </div>
+      <div>
+        <label for="fProject">Proyek</label>
+        <input type="text" id="fProject" list="projectList" placeholder="mis. geist-reference-sidebar">
+        <datalist id="projectList"></datalist>
+      </div>
+      <div>
+        <label for="fInput">Input token</label>
+        <input type="text" inputmode="numeric" id="fInput" placeholder="mis. 125k">
+      </div>
+      <div>
+        <label for="fOutput">Output token</label>
+        <input type="text" inputmode="numeric" id="fOutput" placeholder="mis. 8k">
+      </div>
+      <div>
+        <label for="fNote">Catatan (opsional)</label>
+        <input type="text" id="fNote" placeholder="mis. sesi coding">
+      </div>
+      <div>
+        <button class="primary" id="addBtn" style="width:100%">Catat</button>
+      </div>
+    </div>
+    <p class="note" id="priceNote"></p>
+    <p class="note">Tip: angka token per sesi bisa dilihat dari indikator penggunaan di ZCode atau dashboard penyedia (Z.ai), lalu catat di sini. Penulisan singkat seperti <span class="mono">125k</span>, <span class="mono">1,2m</span>, atau <span class="mono">125.000</span> juga diterima.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Pemakaian per Model</h2>
+    <div id="modelBars"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Pemakaian Harian (14 hari terakhir)</h2>
+    <div id="dayBars"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Riwayat</h2>
+    <div class="toolbar">
+      <select id="filterModel"><option value="">Semua model</option></select>
+      <select id="filterProject"><option value="">Semua proyek</option></select>
+      <select id="filterMonth"><option value="">Semua bulan</option></select>
+      <span style="flex:1"></span>
+      <button class="ghost" id="exportBtn">Export JSON</button>
+      <button class="ghost" id="importBtn">Import JSON</button>
+      <button class="danger ghost" id="clearBtn">Hapus semua</button>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Tanggal</th><th>Model</th><th>Proyek</th>
+            <th class="num">Input</th><th class="num">Output</th><th class="num">Total</th>
+            <th class="num">Biaya</th><th>Catatan</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyMsg" style="display:none">Belum ada catatan. Tambahkan pemakaian pertama di atas.</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// Harga per 1 juta token (USD) — perkiraan publik, bisa berubah sewaktu-waktu.
+// Angka ini hanya untuk estimasi; sesuaikan sendiri bila harga berubah.
+const MODELS = [
+  { id: "glm-5.3-flash",    name: "GLM-5.3 Flash (Z.ai)", in: 0,     out: 0 },
+  { id: "gpt-4o",           name: "GPT-4o",             in: 2.50,  out: 10.00 },
+  { id: "gpt-4o-mini",      name: "GPT-4o mini",        in: 0.15,  out: 0.60 },
+  { id: "o3",               name: "o3",                 in: 2.00,  out: 8.00 },
+  { id: "claude-opus-4",    name: "Claude Opus 4",      in: 15.00, out: 75.00 },
+  { id: "claude-sonnet-4",  name: "Claude Sonnet 4",    in: 3.00,  out: 15.00 },
+  { id: "claude-haiku-3.5", name: "Claude Haiku 3.5",   in: 0.80,  out: 4.00 },
+  { id: "gemini-2.5-pro",   name: "Gemini 2.5 Pro",     in: 1.25,  out: 10.00 },
+  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash",   in: 0.30,  out: 2.50 },
+  { id: "deepseek-v3",      name: "DeepSeek V3",        in: 0.27,  out: 1.10 },
+  { id: "custom",           name: "Lainnya / kustom",   in: 0,     out: 0 },
+];
+
+const STORE_KEY = "ai-token-usage-v1";
+const BUDGET_KEY = "ai-token-usage-budget-v1";
+let entries = [];
+let budget = 0;
+
+// Data awal: perkiraan pemakaian token sesi ZCode (model GLM-5.3 Flash) saat
+// mengerjakan refactor proyek geist-reference-sidebar. Angka ini ESTIMASI
+// manual, bukan data resmi dari penyedia — sesuaikan bila punya angka asli.
+const SEED_ENTRIES = [
+  { id: "seed-01-eksplorasi",   date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 185000, output: 9000,  note: "Baca codebase (~9.000 baris), docs Next.js 16.3, baseline git" },
+  { id: "seed-02-move",         date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 125000, output: 14000, note: "Tahap 1: pindah/rename 35+ file ke struktur feature-first kebab-case" },
+  { id: "seed-03-overview",     date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 160000, output: 38000, note: "Tahap 2-3: pecah ServiceOverview jadi model + hook + canvas/panel/dialog" },
+  { id: "seed-04-predeploy",    date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 95000,  output: 26000, note: "Tahap 4: pecah PreDeployFlow jadi 3 step + summary + model" },
+  { id: "seed-05-shell-css",    date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 85000,  output: 12000, note: "Tahap 5-6: application shell bersama + pecah index.css ke src/styles" },
+  { id: "seed-06-verifikasi",   date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 140000, output: 18000, note: "Typecheck, production build, smoke test 3 route via browser, screenshot tema" },
+  { id: "seed-07-pr",           date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 45000,  output: 7000,  note: "Commit, push, buat PR #1 + bikin file tracker ini" },
+  { id: "seed-08-skill",        date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 90000,  output: 9000,  note: "Pasang skill vercel-react-best-practices ke project, commit & push" },
+  { id: "seed-09-tracker",      date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 75000,  output: 14000, note: "Upgrade tracker token: filter proyek, grafik harian, target biaya, parser 125k" },
+  { id: "seed-10-audit",        date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 340000, output: 16000, note: "Audit penuh 70 aturan skill via 2 subagent paralel di seluruh src (~6.900 baris)" },
+  { id: "seed-11-fixes",        date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 120000, output: 12000, note: "Fix performa: debounce localStorage canvas, memo node + handler stabil, isPanning state, context shell, timer chat" },
+  { id: "seed-12-verifikasi",   date: "2026-08-28", model: "glm-5.3-flash", project: "geist-reference-sidebar", input: 110000, output: 8000,  note: "tsc + next build + smoke test browser: drag node, pan canvas, class panning, localStorage, chat reply" },
+];
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      entries = Array.isArray(parsed) ? parsed.map(normalizeEntry).filter(Boolean) : [];
+    } else {
+      entries = SEED_ENTRIES.map((e) => ({ ...e }));
+      save();
+    }
+    budget = parseFloat(localStorage.getItem(BUDGET_KEY)) || 0;
+  } catch { entries = []; }
+}
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(entries)); } catch {}
+}
+function modelById(id) {
+  return MODELS.find((m) => m.id === id) ?? MODELS[MODELS.length - 1];
+}
+function fmt(n) { return n.toLocaleString("id-ID"); }
+function fmtCost(v) { return "$" + v.toFixed(2); }
+// Escape agar catatan/proyek dari input atau file import tidak dieksekusi sebagai HTML.
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+// Terima "125000", "125.000", "125k", "1,2k", "1.2m".
+function parseTokenNum(raw) {
+  const s = String(raw).trim().toLowerCase().replace(/\s/g, "");
+  if (!s) return 0;
+  const m = s.match(/^([0-9.,]+)(k|m)?$/);
+  if (!m) return 0;
+  if (m[2]) return Math.round((parseFloat(m[1].replace(",", ".")) || 0) * (m[2] === "k" ? 1e3 : 1e6));
+  return parseInt(m[1].replace(/[.,]/g, ""), 10) || 0;
+}
+function entryCost(e) {
+  const m = modelById(e.model);
+  const pin = e.priceIn ?? m.in;
+  const pout = e.priceOut ?? m.out;
+  return (e.input * pin + e.output * pout) / 1e6;
+}
+
+// Validasi bentuk record: data bisa berasal dari file import JSON arbitrer
+// maupun localStorage lama, jadi setiap field dipaksa ke tipe yang aman
+// sebelum disimpan atau dirender (cegah XSS/nilai sampah).
+function normalizeEntry(raw) {
+  if (typeof raw !== "object" || raw === null) return null;
+  const str = (v) => (typeof v === "string" ? v : "");
+  const num = (v) => {
+    if (Number.isFinite(v)) return v;
+    if (typeof v === "string" && v.trim()) return parseTokenNum(v);
+    return 0;
+  };
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(str(raw.date)) ? raw.date : "";
+  const input = num(raw.input);
+  const output = num(raw.output);
+  if (!date || input + output === 0) return null;
+  const e = {
+    id: str(raw.id) || Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+    date,
+    model: str(raw.model) || "custom",
+    project: str(raw.project),
+    input,
+    output,
+    note: str(raw.note),
+  };
+  if (Number.isFinite(raw.priceIn) && Number.isFinite(raw.priceOut)) {
+    e.priceIn = raw.priceIn;
+    e.priceOut = raw.priceOut;
+  }
+  return e;
+}
+
+function initForm() {
+  const sel = document.getElementById("fModel");
+  for (const m of MODELS) {
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = m.name + (m.in ? ` ($${m.in}/$${m.out} per 1M)` : "");
+    sel.appendChild(opt);
+  }
+  document.getElementById("fDate").value = new Date().toISOString().slice(0, 10);
+  const lastProject = [...entries].reverse().find((e) => e.project);
+  document.getElementById("fProject").value = lastProject ? lastProject.project : "geist-reference-sidebar";
+  document.getElementById("budgetInput").value = budget || "";
+  updatePriceNote();
+  sel.addEventListener("change", updatePriceNote);
+}
+
+function updatePriceNote() {
+  const m = modelById(document.getElementById("fModel").value);
+  document.getElementById("priceNote").textContent = m.in
+    ? `Harga terpakai: $${m.in} / 1M input token, $${m.out} / 1M output token (perkiraan publik; sesuaikan bila perlu).`
+    : "Model kustom tanpa harga — estimasi biaya dihitung $0 kecuali diubah lewat JSON.";
+}
+
+function addEntry() {
+  const date = document.getElementById("fDate").value || new Date().toISOString().slice(0, 10);
+  const model = document.getElementById("fModel").value;
+  const project = document.getElementById("fProject").value.trim() || "(tanpa proyek)";
+  const input = parseTokenNum(document.getElementById("fInput").value);
+  const output = parseTokenNum(document.getElementById("fOutput").value);
+  const note = document.getElementById("fNote").value.trim();
+  if (input + output === 0) { alert("Isi jumlah token terlebih dahulu."); return; }
+  entries.push({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), date, model, project, input, output, note });
+  save();
+  document.getElementById("fInput").value = "";
+  document.getElementById("fOutput").value = "";
+  document.getElementById("fNote").value = "";
+  render();
+}
+
+function deleteEntry(id) {
+  entries = entries.filter((e) => e.id !== id);
+  save();
+  render();
+}
+
+function filtered() {
+  const fm = document.getElementById("filterModel").value;
+  const fp = document.getElementById("filterProject").value;
+  const mo = document.getElementById("filterMonth").value;
+  return entries.filter((e) =>
+    (!fm || e.model === fm) && (!fp || (e.project ?? "") === fp) && (!mo || e.date.slice(0, 7) === mo));
+}
+
+function localDateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function render() {
+  const list = filtered();
+
+  const sum = (key) => list.reduce((a, e) => a + e[key], 0);
+  document.getElementById("totalTokens").textContent = fmt(sum("input") + sum("output"));
+  document.getElementById("totalInput").textContent = fmt(sum("input"));
+  document.getElementById("totalOutput").textContent = fmt(sum("output"));
+  document.getElementById("totalCost").textContent = fmtCost(list.reduce((a, e) => a + entryCost(e), 0));
+
+  // bar per model
+  const perModel = new Map();
+  for (const e of list) {
+    const cur = perModel.get(e.model) ?? { tokens: 0, cost: 0 };
+    cur.tokens += e.input + e.output;
+    cur.cost += entryCost(e);
+    perModel.set(e.model, cur);
+  }
+  const bars = [...perModel.entries()].sort((a, b) => b[1].tokens - a[1].tokens);
+  const maxTokens = bars.length ? bars[0][1].tokens : 0;
+  document.getElementById("modelBars").innerHTML = bars.length
+    ? bars.map(([id, v]) => {
+        const m = modelById(id);
+        const pct = maxTokens ? Math.max((v.tokens / maxTokens) * 100, 2) : 0;
+        return `<div class="bar-row">
+          <span>${m.name}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+          <span class="mono" style="text-align:right">${fmt(v.tokens)} · ${fmtCost(v.cost)}</span>
+        </div>`;
+      }).join("")
+    : '<div class="empty">Belum ada data untuk ditampilkan.</div>';
+
+  // grafik harian 14 hari terakhir (mengikuti filter aktif)
+  const perDay = new Map();
+  for (const e of list) perDay.set(e.date, (perDay.get(e.date) ?? 0) + e.input + e.output);
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = localDateKey(d);
+    days.push({ key, label: d.toLocaleDateString("id-ID", { day: "numeric", month: "short" }), tokens: perDay.get(key) ?? 0 });
+  }
+  const maxDay = Math.max(...days.map((d) => d.tokens), 0);
+  document.getElementById("dayBars").innerHTML = maxDay
+    ? days.map((d) => {
+        const pct = Math.max((d.tokens / maxDay) * 100, 2);
+        return `<div class="bar-row">
+          <span>${esc(d.label)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${d.tokens ? pct : 0}%"></div></div>
+          <span class="mono" style="text-align:right">${d.tokens ? fmt(d.tokens) : "—"}</span>
+        </div>`;
+      }).join("")
+    : '<div class="empty">Belum ada pemakaian dalam 14 hari terakhir.</div>';
+
+  // target biaya bulan ini (tidak terpengaruh filter)
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const monthCost = entries.filter((e) => e.date.slice(0, 7) === monthKey).reduce((a, e) => a + entryCost(e), 0);
+  const bEl = document.getElementById("budgetBar");
+  if (budget > 0) {
+    const ratio = monthCost / budget;
+    const pct = Math.min(ratio * 100, 100);
+    const over = ratio > 1;
+    bEl.innerHTML = `<div class="budget-line">
+        <span>Terpakai bulan ini: <strong class="mono">${fmtCost(monthCost)}</strong></span>
+        <span class="${over ? "warn" : ""}">${over ? "Melebihi target " + fmtCost(budget) : Math.round(ratio * 100) + "% dari target " + fmtCost(budget)}</span>
+      </div>
+      <div class="bar-track" style="height:16px"><div class="bar-fill${over ? " danger" : ""}" style="width:${pct}%"></div></div>`;
+  } else {
+    bEl.innerHTML = '<div class="empty">Belum ada target. Isi target biaya per bulan untuk memantau pemakaian.</div>';
+  }
+
+  // tabel riwayat (terbaru dulu)
+  const rows = [...list].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  document.getElementById("rows").innerHTML = rows.map((e) => {
+    const m = modelById(e.model);
+    return `<tr>
+      <td>${esc(e.date)}</td>
+      <td><span class="tag">${esc(m.name)}</span></td>
+      <td><span class="proj">${esc(e.project ?? "")}</span></td>
+      <td class="num mono">${fmt(e.input)}</td>
+      <td class="num mono">${fmt(e.output)}</td>
+      <td class="num mono"><strong>${fmt(e.input + e.output)}</strong></td>
+      <td class="num mono">${fmtCost(entryCost(e))}</td>
+      <td>${esc(e.note)}</td>
+      <td><button class="danger ghost delete-btn" data-id="${esc(e.id)}">Hapus</button></td>
+    </tr>`;
+  }).join("");
+  document.getElementById("emptyMsg").style.display = rows.length ? "none" : "block";
+
+  // opsi filter
+  const models = [...new Set(entries.map((e) => e.model))];
+  const selM = document.getElementById("filterModel");
+  const curM = selM.value;
+  selM.innerHTML = '<option value="">Semua model</option>' +
+    models.map((id) => `<option value="${esc(id)}" ${id === curM ? "selected" : ""}>${esc(modelById(id).name)}</option>`).join("");
+  const projects = [...new Set(entries.map((e) => e.project).filter(Boolean))];
+  const selP = document.getElementById("filterProject");
+  const curP = selP.value;
+  selP.innerHTML = '<option value="">Semua proyek</option>' +
+    projects.map((p) => `<option value="${esc(p)}" ${p === curP ? "selected" : ""}>${esc(p)}</option>`).join("");
+  document.getElementById("projectList").innerHTML = projects.map((p) => `<option value="${esc(p)}">`).join("");
+  const months = [...new Set(entries.map((e) => e.date.slice(0, 7)))].sort().reverse();
+  const selMo = document.getElementById("filterMonth");
+  const curMo = selMo.value;
+  selMo.innerHTML = '<option value="">Semua bulan</option>' +
+    months.map((mo) => `<option value="${esc(mo)}" ${mo === curMo ? "selected" : ""}>${esc(mo)}</option>`).join("");
+}
+
+document.getElementById("addBtn").addEventListener("click", addEntry);
+document.getElementById("rows").addEventListener("click", (ev) => {
+  const btn = ev.target.closest("[data-id]");
+  if (btn) deleteEntry(btn.dataset.id);
+});
+document.getElementById("filterModel").addEventListener("change", render);
+document.getElementById("filterProject").addEventListener("change", render);
+document.getElementById("filterMonth").addEventListener("change", render);
+document.getElementById("budgetSave").addEventListener("click", () => {
+  budget = parseFloat(document.getElementById("budgetInput").value) || 0;
+  try { localStorage.setItem(BUDGET_KEY, String(budget)); } catch {}
+  render();
+});
+document.getElementById("clearBtn").addEventListener("click", () => {
+  if (entries.length && confirm("Hapus semua catatan?")) { entries = []; save(); render(); }
+});
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ai-token-usage.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!Array.isArray(data)) throw new Error();
+      const clean = data.map(normalizeEntry).filter(Boolean);
+      if (!clean.length) throw new Error();
+      entries = entries.concat(clean);
+      save();
+      render();
+    } catch { alert("File JSON tidak valid."); }
+  };
+  reader.readAsText(file);
+  ev.target.value = "";
+});
+
+load();
+initForm();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+/* Tailwind v4 preflight dropped `cursor: pointer` on buttons — restore v3 behavior */
+button, [role="button"] { cursor: pointer; }
+
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; margin: 0; }
+
+.projects-page { container-type: inline-size; }
+
+.projects-mono {
+  font-family: "Source Code Pro Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-weight: 450;
+}
+
+@container (min-width: 1020px) {
+  .projects-layout {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+
+  .projects-usage-panel {
+    width: 320px;
+  }
+}
+
+.sidebar-scrollbar { scrollbar-width: thin; scrollbar-color: #3a373f transparent; }
+.sidebar-scrollbar::-webkit-scrollbar { width: 5px; }
+.sidebar-scrollbar::-webkit-scrollbar-thumb { background: #3a373f; border-radius: 99px; }
+
+.search-palette-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #737078 transparent;
+  scrollbar-gutter: stable;
+}
+
+.search-palette-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-palette-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-palette-scrollbar::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background: #737078;
+  background-clip: padding-box;
+}
+
+.search-palette-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
