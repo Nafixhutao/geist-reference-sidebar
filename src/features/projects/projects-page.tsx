@@ -84,7 +84,7 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
               {openSidebar && (
                 <button
                   type="button"
-                  onClick={onOpenSidebar}
+                  onClick={openSidebar}
                   className="inline-flex h-10 items-center gap-2 rounded-md border border-[var(--projects-border)] px-3 text-xs font-medium text-[var(--projects-text)] transition-colors hover:bg-white/[0.04] lg:hidden"
                 >
                   <Menu size={15} strokeWidth={1.8} aria-hidden="true" />

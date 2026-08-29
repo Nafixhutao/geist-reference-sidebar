@@ -273,8 +273,8 @@ function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) {
-      entries = JSON.parse(raw);
-      if (!Array.isArray(entries)) entries = [];
+      const parsed = JSON.parse(raw);
+      entries = Array.isArray(parsed) ? parsed.map(normalizeEntry).filter(Boolean) : [];
     } else {
       entries = SEED_ENTRIES.map((e) => ({ ...e }));
       save();
@@ -309,6 +309,37 @@ function entryCost(e) {
   const pin = e.priceIn ?? m.in;
   const pout = e.priceOut ?? m.out;
   return (e.input * pin + e.output * pout) / 1e6;
+}
+
+// Validasi bentuk record: data bisa berasal dari file import JSON arbitrer
+// maupun localStorage lama, jadi setiap field dipaksa ke tipe yang aman
+// sebelum disimpan atau dirender (cegah XSS/nilai sampah).
+function normalizeEntry(raw) {
+  if (typeof raw !== "object" || raw === null) return null;
+  const str = (v) => (typeof v === "string" ? v : "");
+  const num = (v) => {
+    if (Number.isFinite(v)) return v;
+    if (typeof v === "string" && v.trim()) return parseTokenNum(v);
+    return 0;
+  };
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(str(raw.date)) ? raw.date : "";
+  const input = num(raw.input);
+  const output = num(raw.output);
+  if (!date || input + output === 0) return null;
+  const e = {
+    id: str(raw.id) || Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+    date,
+    model: str(raw.model) || "custom",
+    project: str(raw.project),
+    input,
+    output,
+    note: str(raw.note),
+  };
+  if (Number.isFinite(raw.priceIn) && Number.isFinite(raw.priceOut)) {
+    e.priceIn = raw.priceIn;
+    e.priceOut = raw.priceOut;
+  }
+  return e;
 }
 
 function initForm() {
@@ -444,7 +475,7 @@ function render() {
   document.getElementById("rows").innerHTML = rows.map((e) => {
     const m = modelById(e.model);
     return `<tr>
-      <td>${e.date}</td>
+      <td>${esc(e.date)}</td>
       <td><span class="tag">${esc(m.name)}</span></td>
       <td><span class="proj">${esc(e.project ?? "")}</span></td>
       <td class="num mono">${fmt(e.input)}</td>
@@ -473,7 +504,7 @@ function render() {
   const selMo = document.getElementById("filterMonth");
   const curMo = selMo.value;
   selMo.innerHTML = '<option value="">Semua bulan</option>' +
-    months.map((mo) => `<option value="${mo}" ${mo === curMo ? "selected" : ""}>${mo}</option>`).join("");
+    months.map((mo) => `<option value="${esc(mo)}" ${mo === curMo ? "selected" : ""}>${esc(mo)}</option>`).join("");
 }
 
 document.getElementById("addBtn").addEventListener("click", addEntry);
@@ -509,7 +540,9 @@ document.getElementById("importFile").addEventListener("change", (ev) => {
     try {
       const data = JSON.parse(reader.result);
       if (!Array.isArray(data)) throw new Error();
-      entries = entries.concat(data);
+      const clean = data.map(normalizeEntry).filter(Boolean);
+      if (!clean.length) throw new Error();
+      entries = entries.concat(clean);
       save();
       render();
     } catch { alert("File JSON tidak valid."); }

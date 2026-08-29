@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import {
   GitBranch,
   Layers3,
@@ -55,7 +55,15 @@ const ServiceNodeCard = memo(function ServiceNodeCard({ node, selected, menuOpen
       data-service-node="true"
       style={{ left: node.position.x, top: node.position.y } as CSSProperties}
       onPointerDown={(event) => onPointerDown(node.id, event)}
-      onClick={() => onSelect(node.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(node.id);
+        }
+      }}
       aria-label={`${node.name} service node`}
     >
       <div className="service-node__header">
@@ -311,10 +319,19 @@ export function ServiceCanvas({ services, selectedServiceId, deploymentActive, o
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
 
-  const handleViewportWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setZoom((value) => Math.max(0.72, Math.min(1.24, Number((value + (event.deltaY > 0 ? -0.08 : 0.08)).toFixed(2)))));
-  };
+  // React registers onWheel as a passive listener, so preventDefault would be
+  // ignored and a wheel gesture would zoom AND scroll the page. Attach a
+  // non-passive native listener instead.
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      setZoom((value) => Math.max(0.72, Math.min(1.24, Number((value + (event.deltaY > 0 ? -0.08 : 0.08)).toFixed(2)))));
+    };
+    viewport.addEventListener("wheel", handleWheel, { passive: false });
+    return () => viewport.removeEventListener("wheel", handleWheel);
+  }, []);
 
   const fitView = () => {
     setZoom(1);
@@ -351,7 +368,6 @@ export function ServiceCanvas({ services, selectedServiceId, deploymentActive, o
         onPointerMove={handleViewportPointerMove}
         onPointerUp={handleViewportPointerUp}
         onPointerCancel={handleViewportPointerUp}
-        onWheel={handleViewportWheel}
       >
         <div className="canvas-stage" style={stageStyle}>
           <svg className="canvas-connectors" viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`} aria-hidden="true">

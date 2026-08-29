@@ -21,54 +21,54 @@ export function SourceStep({
         <p>Start by connecting a source or choose a template to deploy.</p>
       </div>
 
-      <div className="deploy-source-list" role="list">
+      <ul className="deploy-source-list" role="list">
         {primarySources.map((source) => {
           const selected = selectedSource === source.id;
           return (
-            <button
-              type="button"
-              role="listitem"
-              className={`deploy-source-option ${selected ? "is-selected" : ""}`}
-              key={source.id}
-              aria-pressed={selected}
-              onClick={() => onSelect(source.id)}
-            >
-              <SourceIcon source={source} />
-              <span className="deploy-source-option__copy">
-                <strong>{source.label}</strong>
-                <small>{source.description}</small>
-              </span>
-              {source.recommended ? <span className="deploy-recommended">Recommended</span> : null}
-              <ChevronRight className="deploy-source-option__chevron" size={17} strokeWidth={1.65} aria-hidden="true" />
-            </button>
+            <li key={source.id} className="deploy-source-item">
+              <button
+                type="button"
+                className={`deploy-source-option ${selected ? "is-selected" : ""}`}
+                aria-pressed={selected}
+                onClick={() => onSelect(source.id)}
+              >
+                <SourceIcon source={source} />
+                <span className="deploy-source-option__copy">
+                  <strong>{source.label}</strong>
+                  <small>{source.description}</small>
+                </span>
+                {source.recommended ? <span className="deploy-recommended">Recommended</span> : null}
+                <ChevronRight className="deploy-source-option__chevron" size={17} strokeWidth={1.65} aria-hidden="true" />
+              </button>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
       <div className="deploy-database-section">
         <div className="deploy-database-heading">
           <span>Or deploy a database</span>
           <span aria-hidden="true" />
         </div>
-        <div className="deploy-database-options" role="list" aria-label="Database sources">
+        <ul className="deploy-database-options" role="list" aria-label="Database sources">
           {databaseSources.map((source) => {
             const selected = selectedSource === source.id;
             return (
-              <button
-                type="button"
-                role="listitem"
-                key={source.id}
-                className={`deploy-database-option ${selected ? "is-selected" : ""}`}
-                aria-pressed={selected}
-                onClick={() => onSelect(source.id)}
-              >
-                <SourceIcon source={source} size="sm" />
-                <span>{source.label}</span>
-                <Plus size={14} strokeWidth={1.8} aria-hidden="true" />
-              </button>
+              <li key={source.id} className="deploy-database-item">
+                <button
+                  type="button"
+                  className={`deploy-database-option ${selected ? "is-selected" : ""}`}
+                  aria-pressed={selected}
+                  onClick={() => onSelect(source.id)}
+                >
+                  <SourceIcon source={source} size="sm" />
+                  <span>{source.label}</span>
+                  <Plus size={14} strokeWidth={1.8} aria-hidden="true" />
+                </button>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
 
       <div className="runtime-section">

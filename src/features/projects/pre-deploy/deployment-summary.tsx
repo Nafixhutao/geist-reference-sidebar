@@ -7,6 +7,7 @@ import {
   RefreshCcw,
 } from "lucide-react";
 import { RegionFlag } from "@/components/region-flag";
+import { regionCityLabel } from "@/lib/region";
 import type { Project } from "../types";
 import {
   FRAMEWORK_LABELS,
@@ -39,7 +40,7 @@ export function DeploymentSummary({
 }) {
   const selectedSource = getSourceDefinition(source);
   const continueDisabled = step === "source" && !source;
-  const regionName = project.regionCountry === "indonesia" ? "Jakarta" : "Singapore";
+  const regionName = regionCityLabel(project.regionCountry);
   const summarySource = selectedSource?.summary ?? "Not selected";
 
   return (

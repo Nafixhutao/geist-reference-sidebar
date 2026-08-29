@@ -70,7 +70,13 @@ export function LogsDialog({ open, service, onClose }: { open: boolean; service:
         <div className="logs-toolbar">
           <span className="logs-live"><span aria-hidden="true" /> Live tail</span>
           <span>production</span>
-          <button type="button" className="logs-copy" onClick={() => void navigator.clipboard?.writeText(`10:24:18 info ${runtimeLine}`)}>
+          <button
+            type="button"
+            className="logs-copy"
+            onClick={() => {
+              navigator.clipboard?.writeText(`10:24:18 info ${runtimeLine}`).catch(() => {});
+            }}
+          >
             <Copy size={13} strokeWidth={1.7} aria-hidden="true" /> Copy
           </button>
         </div>

@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { RegionFlag } from "@/components/region-flag";
+import { regionCityLabel } from "@/lib/region";
 import type { Project } from "../types";
 import { DetailRow, StatusPill, TechnologyLogo } from "./service-primitives";
 import { serviceKindLabel, type ServiceNode } from "./service-overview-model";
@@ -17,7 +18,7 @@ import { serviceKindLabel, type ServiceNode } from "./service-overview-model";
 function SetupSteps({ services, deploymentStatus }: { services: ServiceNode[]; deploymentStatus: string }) {
   const steps = [
     { label: "Project created", detail: "Complete", complete: true },
-    { label: "Add service", detail: services.length ? `${services.length} services connected` : "Add your first service", complete: services.length > 0 },
+    { label: "Add service", detail: services.length ? `${services.length} service${services.length === 1 ? "" : "s"} connected` : "Add your first service", complete: services.length > 0 },
     { label: "Configure", detail: services.length ? "Environment ready" : "Set environment variables", complete: false },
     { label: "Deploy", detail: deploymentStatus === "Live" ? "Deployed to production" : "Deploy your services", complete: deploymentStatus === "Live" },
     { label: "Domain", detail: "Add a custom domain", complete: false },
@@ -131,7 +132,7 @@ export function ProjectPanel({ project, services, selectedService, deploymentSta
             <span className="panel-section__title">Environment summary</span>
             <dl className="detail-list">
               <DetailRow label="Services"><strong>{services.length}</strong></DetailRow>
-              <DetailRow label="Region"><span className="panel-region"><RegionFlag country="singapore" /> Singapore</span></DetailRow>
+              <DetailRow label="Region"><span className="panel-region"><RegionFlag country={project.regionCountry} /> {regionCityLabel(project.regionCountry)} ({project.region})</span></DetailRow>
               <DetailRow label="Status"><span className="panel-status-dot"><span aria-hidden="true" />{deploymentStatus}</span></DetailRow>
               <DetailRow label="Domain" mono>{services.length ? domain : "Not configured"}</DetailRow>
             </dl>

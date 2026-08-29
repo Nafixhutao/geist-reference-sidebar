@@ -110,10 +110,16 @@
 }
 
 .deploy-source-list {
-  margin-top: 17px;
+  margin: 17px 0 0;
+  padding: 0;
   overflow: hidden;
   border: 1px solid #30383b;
   border-radius: 9px;
+  list-style: none;
+}
+
+.deploy-source-item:not(:last-child) .deploy-source-option {
+  border-bottom: 1px solid #30383b;
 }
 
 .deploy-source-option {
@@ -123,16 +129,11 @@
   align-items: center;
   gap: 15px;
   border: 0;
-  border-bottom: 1px solid #30383b;
   padding: 9px 17px;
   background: transparent;
   color: #e9eeee;
   text-align: left;
   transition: background-color 140ms ease, color 140ms ease;
-}
-
-.deploy-source-option:last-child {
-  border-bottom: 0;
 }
 
 .deploy-source-option:hover,
@@ -239,6 +240,8 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 7px;
   margin-top: 9px;
+  padding: 0;
+  list-style: none;
 }
 
 .deploy-database-option {
@@ -620,6 +623,11 @@
   background: #9aa5a8;
 }
 
+.deploy-toggle-row input:focus-visible + .deploy-toggle {
+  outline: 2px solid #16d49b;
+  outline-offset: 2px;
+}
+
 .deploy-toggle-row strong,
 .deploy-toggle-row small {
   display: block;
@@ -719,7 +727,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: currentColor;
+  color: currentcolor;
 }
 
 .deploy-live-card {

@@ -21,6 +21,7 @@
   --projects-accent-hover: #087f55;
   --projects-warning: #f59e0b;
   --projects-danger: #ff7a82;
+
   font-family: "Geist Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   color: #eeeaf0;
   background: #1a181d;
@@ -82,6 +83,7 @@ html[data-theme="light"] {
   --projects-accent-hover: #066b45;
   --projects-warning: #a86e00;
   --projects-danger: #bd3f49;
+
   color-scheme: light;
   background: #ffffff;
   color: #1a181d;
