@@ -147,8 +147,8 @@ export function MobileSheet({ open, onClose, hasTopBar = false }: SidebarProps) 
           }
         }}
         className={cn(
-          "pointer-events-auto fixed bottom-1 left-[7vw] flex w-[88vw] max-w-[360px] flex-col overflow-hidden rounded-[7px] border border-[#302E34] bg-[#232127] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.025)]",
-          hasTopBar ? "top-[52px]" : "top-1",
+          "pointer-events-auto fixed bottom-0 left-0 flex w-[86vw] max-w-[360px] flex-col overflow-hidden border-r border-[#302E34] bg-[#232127] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.025),12px_0_32px_rgba(0,0,0,0.45)]",
+          hasTopBar ? "top-12 h-[calc(100dvh-48px)]" : "top-0 h-dvh",
           !open && "pointer-events-none",
         )}
       >

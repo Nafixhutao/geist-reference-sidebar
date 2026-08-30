@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Sidebar } from "@/features/navigation/sidebar";
+import { PanelToggleIcon } from "@/features/navigation/sidebar-shared";
 
 type ApplicationShellValue = {
   openSidebar: () => void;
@@ -19,7 +20,17 @@ export function useApplicationShell() {
  * Page content is passed as children so each page keeps its own client
  * boundary instead of the whole tree being one.
  */
-export function ApplicationShell({ children }: { children: ReactNode }) {
+export function ApplicationShell({
+  children,
+  desktopSidebar = true,
+  hasTopBar = false,
+}: {
+  children: ReactNode;
+  /** Pages with their own chrome can opt out of the desktop rail. */
+  desktopSidebar?: boolean;
+  /** Shifts the mobile drawer below the 48px top bar those pages render. */
+  hasTopBar?: boolean;
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Stable identity: consumers (pages with heavy tables) must not re-render
   // just because the shell re-rendered.
@@ -34,8 +45,23 @@ export function ApplicationShell({ children }: { children: ReactNode }) {
   return (
     <ApplicationContext.Provider value={shellValue}>
       <div className="min-h-dvh bg-[var(--projects-bg)]">
+        {/* Mobile-only nav opener, pinned top-left like the CodeRabbit reference.
+            Pages that render their own top bar provide the opener inside it
+            instead, so this stays hidden there. Sits under the sheet overlay
+            (z-50) so the backdrop covers it while open. */}
+        {!hasTopBar && (
+          <button
+            type="button"
+            onClick={openSidebar}
+            aria-label="Open sidebar"
+            aria-haspopup="dialog"
+            className="fixed left-4 top-3 z-40 inline-flex size-9 items-center justify-center rounded-lg border border-[var(--projects-border)] bg-[var(--projects-control)] text-[var(--projects-text)] shadow-[0_1px_3px_rgba(0,0,0,0.35)] transition-colors hover:border-[var(--projects-border-hover)] lg:hidden"
+          >
+            <PanelToggleIcon className="size-[18px]" />
+          </button>
+        )}
         <div className="min-h-dvh lg:flex">
-          <Sidebar open={sidebarOpen} onClose={closeSidebar} />
+          <Sidebar open={sidebarOpen} onClose={closeSidebar} hasTopBar={hasTopBar} desktop={desktopSidebar} />
           <main className="relative min-h-dvh min-w-0 flex-1">{children}</main>
         </div>
       </div>

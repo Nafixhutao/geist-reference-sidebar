@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Menu, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useApplicationShell } from "@/components/application-shell";
 import { ProjectCard, ProjectTableHeader } from "./project-card";
 import { ProjectsSkeleton } from "./project-skeletons";
 import { ProjectToolbar } from "./project-toolbar";
@@ -13,8 +12,6 @@ import { loadProjects, saveProjects } from "./project-store";
 import type { Project, ProjectSort, ProjectStatus, ProjectView } from "./types";
 
 export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
-  const shell = useApplicationShell();
-  const openSidebar = onOpenSidebar ?? shell?.openSidebar;
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<ProjectStatus | "all">("all");
   const [sort, setSort] = useState<ProjectSort>("name-asc");
@@ -67,8 +64,8 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
     <section className="projects-page min-h-dvh bg-[var(--projects-bg)] px-4 pb-12 pt-14 sm:px-6 lg:px-7">
       <div className="mx-auto w-full max-w-[1440px]">
         <header className="relative border-b border-[var(--projects-border)] pb-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="m-0 text-[28px] font-semibold leading-8 tracking-[-0.035em] text-[var(--projects-text)]">
                   Projects
@@ -80,21 +77,11 @@ export function ProjectsPage({ onOpenSidebar }: { onOpenSidebar?: () => void }) 
               <p className="m-0 mt-2 text-[14px] leading-5 text-[var(--projects-muted)]">Manage your infrastructure</p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 lg:absolute lg:right-0 lg:top-5">
-              {openSidebar && (
-                <button
-                  type="button"
-                  onClick={openSidebar}
-                  className="inline-flex h-10 items-center gap-2 rounded-md border border-[var(--projects-border)] px-3 text-xs font-medium text-[var(--projects-text)] transition-colors hover:bg-white/[0.04] lg:hidden"
-                >
-                  <Menu size={15} strokeWidth={1.8} aria-hidden="true" />
-                  Menu
-                </button>
-              )}
+            <div className="flex w-full shrink-0 items-center gap-2 lg:absolute lg:right-0 lg:top-5 lg:w-auto">
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(true)}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[var(--projects-accent-border)] bg-[var(--projects-accent-strong)] px-4 text-[13px] font-semibold leading-none text-white shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-colors hover:bg-[var(--projects-accent-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--projects-accent)]/70"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[10px] border border-[var(--projects-accent-border)] bg-[var(--projects-accent-strong)] px-4 text-[13px] font-semibold leading-none text-white shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-colors hover:bg-[var(--projects-accent-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--projects-accent)]/70 lg:w-auto"
               >
                 <Plus size={15} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
                 New project

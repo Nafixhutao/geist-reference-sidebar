@@ -6,6 +6,9 @@ export interface SidebarProps {
   onClose: () => void;
   /** Keeps the sidebar below the 48px application top bar when present. */
   hasTopBar?: boolean;
+  /** When false the desktop rail is never rendered — pages that manage their
+   * own chrome still get the mobile drawer without changing desktop layout. */
+  desktop?: boolean;
 }
 
 export type BadgeKind = "Beta" | "New";

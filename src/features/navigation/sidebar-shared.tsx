@@ -11,6 +11,17 @@ import type { BadgeKind } from "./types";
 
 export const tap = (reduce: boolean) => (reduce ? undefined : { scale: 0.98 });
 
+/** 16×16 panel glyph from the sidebar header toggle, shared with the mobile
+ * nav openers so every entry point carries the same mark. */
+export function PanelToggleIcon({ className = "size-4" }: { className?: string }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
+      <rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="2" />
+      <rect x="4" y="5" width="2" height="6" rx="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 export const NavIcon = (Icon: LucideIcon) => (
   <Icon size={15} strokeWidth={1.8} className="shrink-0 text-[#AAA6AE]" />
 );
