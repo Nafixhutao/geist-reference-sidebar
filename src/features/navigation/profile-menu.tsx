@@ -200,8 +200,8 @@ function ProfileMenu({ onClose }: { onClose: () => void }) {
         <div className="flex items-center gap-2.5 px-2.5 py-2.5">
           <img alt="" className="size-9 shrink-0 rounded-full object-cover" src="https://avatars.githubusercontent.com/u/135522402?v=4" />
           <div className="min-w-0 leading-tight">
-            <p className="m-0 truncate text-[13px] font-semibold text-[#edecf1]">Nafixhutao</p>
-            <p className="m-0 mt-[2px] truncate text-[12px] text-[#8a8791]">@nafixhutao</p>
+            <p className="m-0 truncate text-[13px] font-semibold text-[#edecf1]">Stealth</p>
+            <p className="m-0 mt-[2px] truncate text-[12px] text-[#8a8791]">@stealth</p>
           </div>
         </div>
 
@@ -260,7 +260,7 @@ export function BottomProfile({
       >
         {/* rail shows a small 20px avatar, the panel wraps it in the full row */}
         <motion.img
-          alt="Nafixhutao avatar"
+          alt="Stealth avatar"
           initial={false}
           animate={{ width: collapsed ? 20 : 32, height: collapsed ? 20 : 32 }}
           transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
@@ -269,8 +269,8 @@ export function BottomProfile({
         />
         <RailLabel collapsed={collapsed} className="flex min-w-0 flex-1 items-center">
           <div className="ml-2 min-w-0 leading-tight">
-            <p className="m-0 truncate text-[14px] leading-[20px] text-[oklch(0.767_0.0105_305)]">Nafixhutao</p>
-            <p className="m-0 mt-[2px] text-[12px] leading-[16px] text-[oklch(0.585_0.0161_305)]">@nafixhutao</p>
+            <p className="m-0 truncate text-[14px] leading-[20px] text-[oklch(0.767_0.0105_305)]">Stealth</p>
+            <p className="m-0 mt-[2px] text-[12px] leading-[16px] text-[oklch(0.585_0.0161_305)]">@stealth</p>
           </div>
           <ChevronsUpDown size={12} strokeWidth={1.7} className="ml-auto shrink-0 text-[#737078]" aria-hidden="true" />
         </RailLabel>

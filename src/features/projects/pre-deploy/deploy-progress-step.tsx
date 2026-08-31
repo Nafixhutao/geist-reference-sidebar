@@ -108,7 +108,7 @@ export function DeployStep({
         {isFailed ? <button type="button" className="deploy-secondary-button" onClick={onRetry}><RefreshCcw size={14} strokeWidth={1.8} aria-hidden="true" />Retry</button> : null}
         {!isLive && !isFailed ? <button type="button" className="deploy-text-button" onClick={onSimulateFailure}>Simulate failed run</button> : null}
       </div>
-      <p className="deploy-prototype-note"><Info size={13} strokeWidth={1.7} aria-hidden="true" />Prototype deployment state is saved in this browser.</p>
+      <p className="deploy-local-note"><Info size={13} strokeWidth={1.7} aria-hidden="true" />Deployment state is saved in this browser.</p>
     </section>
   );
 }

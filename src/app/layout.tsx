@@ -4,7 +4,13 @@ import "@fontsource-variable/source-code-pro";
 import "../styles/global.css";
 
 export const metadata: Metadata = {
-  title: "Nafixhutao Sidebar",
+  title: {
+    default: "Stealth Console",
+    template: "%s · Stealth",
+  },
+  description:
+    "Stealth Console — deploy, monitor, and manage your services on the Stealth developer cloud.",
+  applicationName: "Stealth",
 };
 
 export const viewport: Viewport = {

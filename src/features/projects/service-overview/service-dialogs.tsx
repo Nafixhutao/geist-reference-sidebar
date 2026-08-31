@@ -106,7 +106,7 @@ export function SettingsDialog({ open, selectedService, onClose, onStatusChange,
           <div>
             <span className="panel-kicker">Project configuration</span>
             <h2 id="settings-title">Settings</h2>
-            <p>Prototype controls for this production environment.</p>
+            <p>Controls for this production environment.</p>
           </div>
           <button type="button" className="icon-button" aria-label="Close settings" onClick={onClose}>
             <X size={17} strokeWidth={1.7} aria-hidden="true" />
@@ -115,7 +115,7 @@ export function SettingsDialog({ open, selectedService, onClose, onStatusChange,
 
         {selectedService ? (
           <label className="settings-field">
-            <span>Prototype service status</span>
+            <span>Service status</span>
             <select value={selectedService.status} onChange={(event) => onStatusChange(event.target.value as ServiceStatus)}>
               <option value="building">Building</option>
               <option value="live">Live</option>
