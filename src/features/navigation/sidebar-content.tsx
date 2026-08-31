@@ -187,7 +187,7 @@ function Header({
         className="flex min-w-0 items-center overflow-hidden"
       >
         <motion.img
-          alt="Stealth workspace avatar"
+          alt="Nafixhutao avatar"
           initial={false}
           animate={{ opacity: collapsed ? 0 : 1 }}
           transition={collapsed ? LABEL_EXIT_TRANSITION : LABEL_ENTER_TRANSITION}
@@ -195,7 +195,7 @@ function Header({
           src="https://avatars.githubusercontent.com/u/135522402?s=80&v=4"
         />
         <RailLabel collapsed={collapsed} className="flex items-center">
-          <span className="ml-2 text-[14px] font-medium tracking-[-0.01em] leading-[20px] text-[oklch(0.949_0.0035_305)]">Stealth</span>
+          <span className="ml-2 text-[14px] font-medium tracking-[-0.01em] leading-[20px] text-[oklch(0.949_0.0035_305)]">Nafixhutao</span>
           {planLoading ? (
             <PixelSkeleton className="ml-2 h-5 w-14" />
           ) : (
