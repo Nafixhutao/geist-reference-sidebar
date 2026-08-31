@@ -1,8 +1,20 @@
 "use client";
 
-import { useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Eye, EyeOff, Lock } from "lucide-react";
+import { Check, CircleAlert, Eye, EyeOff, Lock } from "lucide-react";
+import {
+  authFontStyle,
+  errorText,
+  inputBorder,
+  inputBorderError,
+  inputClass,
+  linkClass,
+  preventPlaceholderNav,
+  secondaryButton,
+  submitButton,
+} from "./auth-shared";
 
 // Brand marks are tiny inline SVGs — not worth an icon-package dependency.
 function GoogleMark() {
@@ -28,14 +40,6 @@ function GoogleMark() {
   );
 }
 
-function AppleMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-4 fill-white" aria-hidden="true">
-      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-    </svg>
-  );
-}
-
 function GitHubMark() {
   return (
     <svg viewBox="0 0 24 24" className="size-4 fill-white" aria-hidden="true">
@@ -44,37 +48,12 @@ function GitHubMark() {
   );
 }
 
-// Official two-tone cloud mark, inlined verbatim — icon packages only ship the
-// single-color version.
-function CloudflareMark() {
-  return (
-    <svg viewBox="0 0 256 117" className="h-[26px] w-auto" aria-hidden="true">
-      <path
-        fill="#FBAD41"
-        d="M205.52,50.81 C204.66,50.81 203.82,50.84 202.97,50.87 C202.83,50.88 202.70,50.91 202.57,50.96 C202.12,51.12 201.77,51.49 201.65,51.96 L198.02,64.63 C196.46,70.08 197.04,75.11 199.67,78.80 C202.08,82.22 206.09,84.23 210.96,84.46 L230.64,85.65 C231.22,85.68 231.73,85.97 232.04,86.43 C232.36,86.93 232.44,87.56 232.24,88.12 C231.91,89.05 231.08,89.70 230.10,89.78 L209.65,90.98 C198.55,91.49 186.59,100.56 182.40,111.61 L180.93,115.51 C180.80,115.84 180.83,116.21 181.03,116.50 C181.22,116.80 181.54,116.98 181.89,117 L252.32,117 C253.16,117.00 253.90,116.44 254.13,115.63 C255.38,111.14 256.01,106.49 256,101.83 C256,73.67 233.42,50.84 205.55,50.84"
-      />
-      <path
-        fill="#F6821F"
-        d="M174.78,115.36 L176.08,110.78 C177.65,105.33 177.07,100.30 174.45,96.61 C172.03,93.19 168.02,91.18 163.15,90.95 L70.84,89.76 C70.26,89.75 69.71,89.46 69.38,88.98 C69.05,88.48 68.98,87.85 69.18,87.29 C69.50,86.36 70.35,85.71 71.33,85.63 L164.50,84.43 C175.57,83.92 187.52,74.85 191.71,63.80 L197.02,49.76 C197.24,49.16 197.29,48.52 197.18,47.90 C191.13,20.51 166.91,0 137.96,0 C111.27,0 88.63,17.40 80.50,41.60 C75.03,37.44 68.18,35.52 61.34,36.24 C48.55,37.52 38.25,47.95 36.98,60.88 C36.65,64.11 36.89,67.37 37.68,70.52 C16.77,71.14 0,88.45 0,109.73 C0,111.65 0.14,113.54 0.41,115.39 C0.53,116.29 1.29,116.96 2.20,116.96 L172.68,116.96 C173.66,116.94 174.52,116.28 174.78,115.33"
-      />
-    </svg>
-  );
-}
-
 const SOCIAL_PROVIDERS: Array<{ name: string; mark: ReactNode }> = [
   { name: "Google", mark: <GoogleMark /> },
-  { name: "Apple", mark: <AppleMark /> },
   { name: "GitHub", mark: <GitHubMark /> },
 ];
 
-// Static class strings stay at module level so nothing is rebuilt per render.
-const secondaryButton =
-  "flex h-10 items-center justify-center gap-2 rounded-lg border border-[#34343b] bg-[#17171a] text-[13.5px] font-medium text-[#f2f2f3] transition-colors hover:border-[#44444c] hover:bg-[#1d1d21] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4f7ff0]";
-const inputClass =
-  "h-10 w-full rounded-lg border border-[#34343b] bg-[#1a1a1d] px-3.5 text-[14px] text-white outline-none transition-colors placeholder:text-[#6b6b72] focus:border-[#4f7ff0] focus-visible:outline-none";
-const linkClass = "font-medium text-[#4d8dff] underline underline-offset-2 hover:text-[#7fabff]";
-
-const preventPlaceholderNav = (event: MouseEvent<HTMLAnchorElement>) => event.preventDefault();
+type FieldErrors = { email?: string; password?: string };
 
 export function LoginForm() {
   const router = useRouter();
@@ -83,10 +62,27 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+
+  // This page sits outside the ApplicationShell, so it must load React Grab
+  // itself to keep the grab overlay available in development.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") void import("react-grab");
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
+
+    const trimmedEmail = email.trim();
+    const nextErrors: FieldErrors = {};
+    if (!trimmedEmail) nextErrors.email = "Email is required.";
+    else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) nextErrors.email = "Enter a valid email address.";
+    if (!password) nextErrors.password = "Password is required.";
+
+    setErrors(nextErrors);
+    if (nextErrors.email || nextErrors.password) return;
+
     setSubmitting(true);
     // Mock sign-in; replace with a real auth call when a backend exists.
     await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -94,15 +90,16 @@ export function LoginForm() {
   }
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center bg-[#0c0c0d] px-4 py-14 font-sans text-white">
-      <a href="/" aria-label="Cloudflare" className="absolute left-6 top-[18px]">
-        <CloudflareMark />
-      </a>
+    <main
+      className="relative flex min-h-dvh flex-col items-center bg-[#0f0f0f] px-4 py-14 font-medium text-white sm:py-10"
+      style={authFontStyle}
+    >
+      <div className="my-auto w-full max-w-[364px]">
+        <h1 className="m-0 text-center text-2xl font-bold leading-8 tracking-[-0.01em]">
+          Sign in to Cloudflare
+        </h1>
 
-      <div className="w-full max-w-[364px]">
-        <h1 className="text-center text-2xl font-bold leading-8 tracking-[-0.01em]">Sign in to Cloudflare</h1>
-
-        <div className="mt-6 grid grid-cols-3 gap-2.5">
+        <div className="mt-6 grid grid-cols-2 gap-2.5">
           {SOCIAL_PROVIDERS.map((provider) => (
             <button key={provider.name} type="button" className={secondaryButton}>
               {provider.mark}
@@ -122,21 +119,31 @@ export function LoginForm() {
           <span className="h-px flex-1 bg-[#26262b]" />
         </div>
 
-        <form onSubmit={handleSubmit} noValidate={false}>
-          <label htmlFor="login-email" className="mb-1.5 block text-[13.5px] font-semibold leading-4">
+        <form onSubmit={handleSubmit} noValidate>
+          <label htmlFor="login-email" className="mb-1.5 block text-[13.5px] font-medium leading-4">
             Email
           </label>
           <input
             id="login-email"
             type="email"
             autoComplete="email"
-            required
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className={inputClass}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+            }}
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "login-email-error" : undefined}
+            className={`${inputClass} ${errors.email ? inputBorderError : inputBorder}`}
           />
+          {errors.email && (
+            <p id="login-email-error" className={errorText}>
+              <CircleAlert size={13} strokeWidth={2} aria-hidden="true" />
+              {errors.email}
+            </p>
+          )}
 
-          <label htmlFor="login-password" className="mb-1.5 mt-4 block text-[13.5px] font-semibold leading-4">
+          <label htmlFor="login-password" className="mb-1.5 mt-4 block text-[13.5px] font-medium leading-4">
             Password
           </label>
           <div className="relative">
@@ -144,10 +151,14 @@ export function LoginForm() {
               id="login-password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              required
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className={`${inputClass} pr-11`}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+              }}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "login-password-error" : undefined}
+              className={`${inputClass} pr-11 ${errors.password ? inputBorderError : inputBorder}`}
             />
             <button
               type="button"
@@ -159,6 +170,12 @@ export function LoginForm() {
               {showPassword ? <EyeOff size={17} strokeWidth={1.8} /> : <Eye size={17} strokeWidth={1.8} />}
             </button>
           </div>
+          {errors.password && (
+            <p id="login-password-error" className={errorText}>
+              <CircleAlert size={13} strokeWidth={2} aria-hidden="true" />
+              {errors.password}
+            </p>
+          )}
 
           <label className="mt-6 flex cursor-pointer select-none items-center gap-2.5 text-[13.5px] leading-4">
             <input
@@ -169,19 +186,14 @@ export function LoginForm() {
             />
             <span
               aria-hidden="true"
-              className="flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border-2 border-[#57575f] bg-transparent transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#4f7ff0] peer-checked:border-[#e8e8ec]"
+              className="flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border-2 border-[#57575f] bg-transparent transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#186cee] peer-checked:border-[#186cee] peer-checked:bg-[#186cee]"
             >
               {remember ? <Check size={13} strokeWidth={3} className="text-white" /> : null}
             </span>
             Save email and login method on this device
           </label>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            aria-busy={submitting}
-            className="mt-6 h-10 w-full rounded-lg bg-[#2563eb] text-[14px] font-semibold text-white transition-colors hover:bg-[#3b7cf8] disabled:cursor-default disabled:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4f7ff0]"
-          >
+          <button type="submit" disabled={submitting} aria-busy={submitting} className={submitButton}>
             {submitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
@@ -194,13 +206,13 @@ export function LoginForm() {
         </p>
         <p className="mt-1 text-center text-[13.5px] leading-5 text-[#b3b3ba]">
           Forgot your{" "}
-          <a href="#" onClick={preventPlaceholderNav} className={linkClass}>
+          <Link href="/forgot-password" className={linkClass}>
             email
-          </a>{" "}
+          </Link>{" "}
           or{" "}
-          <a href="#" onClick={preventPlaceholderNav} className={linkClass}>
+          <Link href="/forgot-password" className={linkClass}>
             password
-          </a>
+          </Link>
           ?
         </p>
 

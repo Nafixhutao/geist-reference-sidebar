@@ -1,3 +1,4 @@
+import { ApplicationShell } from "@/components/application-shell";
 import { ProjectDetailPage } from "@/features/projects/project-detail-page";
 import { ProjectClientLookup } from "@/features/projects/project-client-lookup";
 import { projects } from "@/features/projects/data";
@@ -10,9 +11,19 @@ export default async function ProjectPage({
   const { projectId } = await params;
   const project = projects.find(({ id }) => id === projectId);
 
-  if (project) return <ProjectDetailPage project={project} />;
+  if (project) {
+    return (
+      <ApplicationShell desktopSidebar={false} hasTopBar>
+        <ProjectDetailPage project={project} />
+      </ApplicationShell>
+    );
+  }
 
   // Proyek yang dibuat lewat tombol "New project" disimpan di localStorage
   // dan tidak ada di data statis — selesaikan di klien.
-  return <ProjectClientLookup projectId={projectId} />;
+  return (
+    <ApplicationShell desktopSidebar={false} hasTopBar>
+      <ProjectClientLookup projectId={projectId} />
+    </ApplicationShell>
+  );
 }

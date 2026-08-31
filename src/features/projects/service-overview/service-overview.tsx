@@ -8,6 +8,7 @@ import {
   Settings,
 } from "lucide-react";
 import { TopBar } from "@/components/top-bar";
+import { useApplicationShell } from "@/components/application-shell";
 import { PreDeployFlow } from "../pre-deploy/pre-deploy-flow";
 import { RegionFlag } from "@/components/region-flag";
 import type { Project } from "../types";
@@ -18,6 +19,7 @@ import { tabs, type TabLabel } from "./service-overview-model";
 import { useServiceOverview } from "./use-service-overview";
 
 export function ServiceOverview({ project }: { project: Project }) {
+  const shell = useApplicationShell();
   const overview = useServiceOverview(project.id);
   const {
     services,
@@ -65,7 +67,12 @@ export function ServiceOverview({ project }: { project: Project }) {
 
   return (
     <div className="overview-page">
-      <TopBar showSidebarToggle={false} projectName={project.name} environment={project.environment} />
+      <TopBar
+        showSidebarToggle={false}
+        onMenuClick={shell?.openSidebar}
+        projectName={project.name}
+        environment={project.environment}
+      />
 
       <main>
         <header className="overview-header">

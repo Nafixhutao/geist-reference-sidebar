@@ -95,7 +95,7 @@ export function ProjectCard({ project, view }: { project: Project; view: Project
   }
 
   return (
-    <article className="group relative flex min-h-[178px] w-full flex-col rounded-md border border-[var(--projects-border)] bg-[var(--projects-card-bg)] p-5 transition-colors hover:border-[var(--projects-border-hover)] hover:bg-[var(--projects-control)]">
+    <article className="group relative flex min-h-[178px] w-full flex-col rounded-md border border-[var(--projects-border)] bg-[var(--projects-card-bg)] p-5 transition-colors hover:border-[var(--projects-border-hover)] hover:bg-[var(--projects-control)] max-lg:min-h-0 max-lg:gap-4">
       <Link
         href={`/projects/${project.id}`}
         aria-label={`Open project ${project.name}`}
@@ -123,12 +123,12 @@ export function ProjectCard({ project, view }: { project: Project; view: Project
         </div>
       </div>
 
-      <div className="pointer-events-none relative z-10 mt-auto flex items-center gap-2">
+      <div className="pointer-events-none relative z-10 mt-auto flex items-center gap-2 max-lg:flex-wrap">
         <ProjectStatusBadge status={project.status} variant="chip" />
         <span className="inline-flex h-7 items-center rounded border border-[var(--projects-border-hover)] px-2.5 font-mono text-[10px] tracking-[0.02em] text-[var(--projects-muted)]">
           {project.plan}
         </span>
-        <span className="ml-auto truncate text-[11px] text-[var(--projects-muted)]">
+        <span className="ml-auto truncate text-[11px] text-[var(--projects-muted)] max-lg:ml-0 max-lg:w-full max-lg:whitespace-normal">
           Created {formatProjectDate(project.createdAt)}
         </span>
       </div>

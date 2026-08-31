@@ -13,6 +13,7 @@ import {
   Search,
   SquareTerminal,
 } from "lucide-react";
+import { PanelToggleIcon } from "@/features/navigation/sidebar-shared";
 
 function SupabaseMark() {
   return (
@@ -82,9 +83,25 @@ export function TopBar({
             <SupabaseMark />
           </button>
         ) : (
-          <span className="inline-flex size-6 shrink-0 items-center justify-center" aria-hidden="true">
-            <SupabaseMark />
-          </span>
+          <>
+            {/* Pages with their own desktop chrome still need a nav opener on
+                phones — the application shell's mobile drawer mounts below. */}
+            <button
+              type="button"
+              onClick={onMenuClick}
+              aria-label="Open sidebar"
+              aria-haspopup="dialog"
+              className="mr-1 inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#343137] text-[#edecf1] transition-colors hover:bg-white/[0.05] lg:hidden"
+            >
+              <PanelToggleIcon />
+            </button>
+            <span
+              className="hidden size-6 shrink-0 items-center justify-center lg:inline-flex"
+              aria-hidden="true"
+            >
+              <SupabaseMark />
+            </span>
+          </>
         )}
 
         <Slash />
