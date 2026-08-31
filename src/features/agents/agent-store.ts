@@ -1,7 +1,7 @@
 import { SEED_AGENTS } from "./data";
 import type { Agent, AgentRole, AgentTool } from "./types";
 
-const STORAGE_KEY = "geist-agents-v1";
+const STORAGE_KEY = "stealth-agents-v1";
 
 /** Load agents from localStorage, falling back to the seed roster. Mirrors the
  * project-store pattern: server render and first client render see the seed,

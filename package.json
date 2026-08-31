@@ -1,5 +1,6 @@
 {
-  "name": "reference-sidebar",
+  "name": "stealth-console",
+  "description": "Stealth Console — the web console for the Stealth developer cloud platform.",
   "private": true,
   "version": "1.0.0",
   "type": "module",

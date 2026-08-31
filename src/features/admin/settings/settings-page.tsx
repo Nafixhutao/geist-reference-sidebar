@@ -12,8 +12,8 @@ const labelClass = "mb-1.5 block text-[12px] font-medium text-[var(--projects-mu
 
 /** Settings — admin configuration form. Local state only; nothing persists. */
 export function SettingsPage() {
-  const [platformName, setPlatformName] = useState("Nafixhutao AI Platform");
-  const [supportEmail, setSupportEmail] = useState("ops@nafixhutao.dev");
+  const [platformName, setPlatformName] = useState("Stealth Cloud Platform");
+  const [supportEmail, setSupportEmail] = useState("ops@stealth.dev");
   const [region, setRegion] = useState("sgp-1");
   const [traceSampling, setTraceSampling] = useState("10%");
   const [logRetention, setLogRetention] = useState("7 days");

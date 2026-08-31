@@ -16,7 +16,7 @@ const MODELS_BY_PROVIDER: Record<string, string[]> = {
   OpenAI: ["GPT-5.6", "GPT-5.6 mini"],
   Anthropic: ["Claude Sonnet 4.5", "Claude Haiku 4.5"],
 };
-const PROJECTS = ["geist-reference-sidebar", "geist-docs-site", "planing-ui-sidebar"] as const;
+const PROJECTS = ["stealth-console", "stealth-docs-site", "stealth-admin-ui"] as const;
 const ACCESS_OPTIONS = ["Read project", "Edit files", "Run commands", "Run tests", "View git diff"] as const;
 
 function CheckRow({

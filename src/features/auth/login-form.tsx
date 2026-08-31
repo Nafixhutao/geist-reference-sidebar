@@ -96,7 +96,7 @@ export function LoginForm() {
     >
       <div className="my-auto w-full max-w-[364px]">
         <h1 className="m-0 text-center text-2xl font-bold leading-8 tracking-[-0.01em]">
-          Sign in to Cloudflare
+          Sign in to Stealth
         </h1>
 
         <div className="mt-6 grid grid-cols-2 gap-2.5">
@@ -217,7 +217,7 @@ export function LoginForm() {
         </p>
 
         <p className="mt-10 text-center text-[12.5px] leading-[18px] text-[#8b8b92]">
-          By continuing, I agree to Cloudflare&apos;s{" "}
+          By continuing, I agree to Stealth&apos;s{" "}
           <a href="#" onClick={preventPlaceholderNav} className="underline hover:text-white">
             terms
           </a>

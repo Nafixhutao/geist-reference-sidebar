@@ -848,7 +848,7 @@
   font-size: 10px;
 }
 
-.deploy-prototype-note {
+.deploy-local-note {
   display: flex;
   align-items: center;
   gap: 6px;

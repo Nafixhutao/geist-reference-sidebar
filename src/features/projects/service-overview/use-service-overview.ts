@@ -69,7 +69,7 @@ export function useServiceOverview(projectId: string) {
       try {
         window.localStorage.setItem(projectServiceStorageKey, JSON.stringify(servicesRef.current));
       } catch {
-        // Keep the prototype usable when storage is blocked or full.
+        // Keep the console usable when storage is blocked or full.
       }
     }, 300);
     return () => window.clearTimeout(timer);
@@ -84,7 +84,7 @@ export function useServiceOverview(projectId: string) {
       try {
         window.localStorage.setItem(key, JSON.stringify(servicesRef.current));
       } catch {
-        // Keep the prototype usable when storage is blocked or full.
+        // Keep the console usable when storage is blocked or full.
       }
     };
   }, [projectServiceStorageKey]);
@@ -116,7 +116,7 @@ export function useServiceOverview(projectId: string) {
       };
       window.localStorage.setItem(projectWorkflowStorageKey, JSON.stringify(stored));
     } catch {
-      // Keep the prototype usable when storage is blocked or full.
+      // Keep the console usable when storage is blocked or full.
     }
   }, [deploymentConfig, preDeployStatus, projectWorkflowStorageKey, selectedSource, workflowMode, workflowStorageReady]);
 
@@ -361,7 +361,7 @@ export function useServiceOverview(projectId: string) {
     } else if (tab === "Settings") {
       setSettingsOpen(true);
     } else if (tab !== "Overview") {
-      setToast(`${tab} view is ready for the next prototype step`);
+      setToast(`${tab} view is coming soon`);
     }
   }, [selectedServiceId]);
 
