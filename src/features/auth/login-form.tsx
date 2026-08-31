@@ -95,6 +95,15 @@ export function LoginForm() {
       style={authFontStyle}
     >
       <div className="my-auto w-full max-w-[364px]">
+        <div className="mb-6 flex justify-center">
+          <img
+            alt="Stealth"
+            src="/stealth-mark.png"
+            width={56}
+            height={56}
+            className="size-14 rounded-[14px] ring-1 ring-white/10"
+          />
+        </div>
         <h1 className="m-0 text-center text-2xl font-bold leading-8 tracking-[-0.01em]">
           Sign in to Stealth
         </h1>
