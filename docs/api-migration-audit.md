@@ -139,9 +139,9 @@ migration is wholesale.
 ## Navigation chrome
 
 ### `src/features/navigation/sidebar-content.tsx` / `profile-menu.tsx` — [H]
-- Hardcoded workspace identity ("Stealth", plan badge "Pro Plus" with a fake
-  1.5s load timer), avatar URL pointing at a GitHub avatar, hardcoded plan
-  labels.
+- Hardcoded signed-in user identity ("Nafixhutao" / "@nafixhutao", plan badge
+  "Pro Plus" with a fake 1.5s load timer), avatar URL pointing at a GitHub
+  avatar, hardcoded plan labels.
 - Migration: current account/workspace from the API.
 
 ### `src/components/top-bar.tsx` — [H]
